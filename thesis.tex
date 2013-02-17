@@ -1,0 +1,1271 @@
+% --- Template for thesis / report with tktltiki2 class ---
+% 
+% last updated 2013/02/15 for tkltiki2 v1.02
+
+\documentclass[english]{tktltiki2}
+
+% tktltiki2 automatically loads babel, so you can simply
+% give the language parameter (e.g. finnish, swedish, english, british) as
+% a parameter for the class: \documentclass[finnish]{tktltiki2}.
+% The information on title and abstract is generated automatically depending on
+% the language, see below if you need to change any of these manually.
+% 
+% Class options:
+% - grading                 -- Print labels for grading information on the front page.
+% - disablelastpagecounter  -- Disables the automatic generation of page number information
+%                              in the abstract. See also \numberofpagesinformation{} command below.
+%
+% The class also respects the following options of article class:
+%   10pt, 11pt, 12pt, final, draft, oneside, twoside,
+%   openright, openany, onecolumn, twocolumn, leqno, fleqn
+%
+% The default font size is 11pt. The paper size used is A4, other sizes are not supported.
+%
+% rubber: module pdftex
+
+% --- General packages ---
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsfonts,amsmath,amssymb,amsthm,booktabs,color,enumitem,graphicx}
+\usepackage[pdftex,hidelinks]{hyperref}
+
+\usepackage{subfigure}
+\usepackage[textsize=tiny]{todonotes}
+\usepackage{multirow} 
+\usepackage{array}
+\usepackage{setspace}
+
+
+% Automatically set the PDF metadata fields
+\makeatletter
+\AtBeginDocument{\hypersetup{pdftitle = {\@title}, pdfauthor = {\@author}}}
+\makeatother
+
+% --- Language-related settings ---
+%
+% these should be modified according to your language
+
+% babelbib for non-english bibliography using bibtex
+\usepackage[fixlanguage]{babelbib}
+
+% add bibliography to the table of contents
+\usepackage[nottoc]{tocbibind}
+
+% --- Theorem environment definitions ---
+
+\newtheorem{thm}{Theorem}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{cor}[thm]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[thm]{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+
+% --- tktltiki2 options ---
+%
+% The following commands define the information used to generate title and
+% abstract pages. The following entries should be always specified:
+
+\title{Theory and practice of rapid elasticity in cloud applications}
+\author{Mika Majakorpi}
+\date{\today}
+\level{MSc Thesis}
+\abstract{
+
+Abstract goes here.
+
+}
+
+% The following can be used to specify keywords and classification of the paper:
+
+\keywords{cloud computing, scalability, elasticity}
+% classification according to ACM Computing Classification System (http://www.acm.org/about/class/)
+% This is probably mostly relevant for computer scientists
+\classification{\protect{\ \\
+\textbf{Networks $\rightarrow$ Cloud computing} \\
+\textbf{Software and its engineering $\rightarrow$ Software performance} \\
+\textit{Computer systems organization $\rightarrow$ Reliability} \\
+General and reference $\rightarrow$  Metrics \\
+}}
+%→
+% If the automatic page number counting is not working as desired in your case,
+% uncomment the following to manually set the number of pages displayed in the abstract page:
+%
+% \numberofpagesinformation{16 pages + 10 appendix pages}
+%
+% If you are not a computer scientist, you will want to uncomment the following by hand and specify
+% your department, faculty and subject by hand:
+%
+% \faculty{Faculty of Science}
+% \department{Department of Computer Science}
+% \subject{Computer Science}
+%
+% If you are not from the University of Helsinki, then you will most likely want to set these also:
+%
+% \university{University of Helsinki}
+% \universitylong{HELSINGIN YLIOPISTO --- HELSINGFORS UNIVERSITET --- UNIVERSITY OF HELSINKI} % displayed on the top of the abstract page
+% \city{Helsinki}
+%
+%\doublespacing
+%\singlespacing
+\onehalfspacing
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{1ex}
+
+\begin{document}
+
+% --- Front matter ---
+
+\maketitle        % title page
+\makeabstract     % abstract page
+
+\tableofcontents  % table of contents
+\newpage          % clear page after the table of contents
+
+\listoftodos
+\newpage
+
+% --- Main matter ---
+
+\section{Introduction}
+
+Computer science is a discipline built on layers upon layers of abstraction. We
+build entire worlds out of combinations of binary states. When complexity
+increases over a practical threshold, we apply another abstraction layer and
+continue until we face another technological or conceptual limit. Progress
+happens when new abstractions emerge either leveraging existing ones or
+replacing and simplifying them.
+
+The context of this thesis is scalability in cloud computing, a recent
+abstraction built on virtualization and distributed computing~\cite{handbook}.
+Technologies related to cloud computing accelerate the provisioning of computing
+resources by several orders of magnitude compared to a non-virtualized process.
+Resources are provided to users as virtual units which draw on a pool of
+distributed physical resources collectively called a cloud. The lead time to
+acquire a virtual server instance is measured in seconds or minutes instead of
+days or even weeks~\cite{elasticsiteMarshall2010}. When the server is no longer
+needed or during times of inactivity the resources reserved for the server are
+allocated to other virtual resources or released back to the cloud as free
+capacity. This flexibility drives down costs and provides the possibility for
+new kinds of agile ICT.
+
+The apparent unlimited supply and instant delivery of resources has inspired
+researchers to consider cloud computing as a utility similar to water and
+electricity ~\cite{Buyya2009a}; It’s ubiquitously available and billed based on
+usage. The ease at which cloud resources can be provisioned makes it possible to
+run applications with an adjustable amount of server instances depending on the
+current or anticipated usage level of the application. This flexibility and the
+speed with which the deployment can be adjusted have enabled e.g. web
+applications to scale from a handful of concurrent sessions to millions
+\todo{citation?} and back without committing to a large amount of computing
+resources which would remain deployed but unused during periods of low usage. A
+deployment capable of serving millions of users is understandably expensive to
+maintain, but the cloud approach with its prevalent pay per use pricing enables
+such scenarios to be realized without large upfront investment in computing
+resources as would be the case with dedicated hardware servers.
+
+The ability of an application deployment on a cloud platform to change in size
+dynamically at runtime is referred to as elasticity or rapid elasticity
+~\cite{nistdefinition}. This capability to automatically scale the deployment in
+(smaller) or out (larger) depending on current demand is a major proponent in
+the hype and success \todo{citation for elasticity importance in cloud success}
+of cloud platforms in recent years.
+
+The goal of this thesis is to explore the theory and practice of rapid
+elasticity. The concept of quality of elasticity is developed and put to test
+using a prototype implementation of an elasticity controller, a piece of cloud
+infrastructure software whose responsibility is to decide on and implement cloud
+provisioning actions. The focus is on hybrid infrastructure as a service (IaaS)
+clouds and the provisioning of virtual machines in such clouds. The elasticity
+controller concept is a step towards a more service oriented cloud offering.
+Rather than provide infrastructure with an interface modeled exactly after the
+operations performed on IaaS VMs, a service-oriented approach aims to provide
+more abstract interfaces which address the cloud customer’s problem domain
+rather than the cloud provider’s. This includes e.g. cross-cloud
+capabilities~\cite{frominfratoservice}.
+
+The thesis is structured as follows. Section~\ref{sec:scalability} discusses the
+different forms of scalability in system and software architectures.
+Section~\ref{sec:cloudscalability} presents cloud scalability in detail.
+Section~\ref{sec:elasticarchitectures} provides a software architecture viewpoint
+and introduces the notion of quality of elasticity for applications.
+Section~\ref{sec:elasticitycontroller} presents the elasticity controller in theory
+and discusses prerequisites, benefits and drawbacks.
+
+A prototype elasticity controller is presented in section \ref{prototype} along
+with test results for two scaling scenarios using it. Monitoring a cloud
+application externally and internally via a performance monitoring aspect
+(aspect oriented programming, AOP) are compared in the test scenarios. Related
+work is discussed in section  \ref{relatedwork} and section~\ref{conclusion}
+presents conclusions.
+
+\subsection{Cloud computing terminology} At this point in time, cloud computing
+is often referred to quite vaguely as a massively scalable model for
+infrastructure services in information technology. As academic research and
+practical use grows, more and more terms and conceptual frameworks related to
+cloud computing are emerging, some of them short lived or focused on marketing.
+Published taxonomies~\cite{Hofer2011taxonomy} offer a snapshot to a fast moving
+target. The following terms for deployment models and abstraction levels are
+fixed in common usage~\cite{nistdefinition}~\cite{handbook} and essential to
+understanding the scope of cloud computing.
+
+A cloud is \emph{public} if it is available for the general public to access and
+\emph{private} if it is only available internally to some organization or
+selected group of organizations. Obvious differences from a cloud user’s
+perspective are the location of data and management of physical resources on
+which the virtualization environment is built. \emph{Hybrid} clouds are a
+combination of the above such that a private cloud is bridged to another private
+or public cloud. They remain functionally independent but the private clouds
+gain benefits in tolerance against hardware failure and resource exhaustion as
+workload (i.e. virtual machines) can be shifted elsewhere in case of a shortage
+of capacity. Such expansion of a private cloud is called
+cloudbursting~\cite{cloudbursting}. When a private cloud is the actor in
+cloudbursting, it is considered functionally transparent to the users of the
+cloud. The cloud user has a single interface towards the cloud which handles
+bursting behind the scenes. Bursting may also be implemented outside any cloud
+infrastructure layer, closer to the application. In this case bursting is
+typically handled by an application controller component in charge of elastic
+scaling (elasticity controller).
+
+Customers can benefit from clouds at different levels of service. The simplest
+case for a customer is using cloud deployed \emph{software as a service (SaaS)}
+without having to consider any operative aspects of the software. Google Docs is
+an example in this category. Google operates the service supposedly deployed on
+their private cloud infrastructure and customers merely log in to the service
+and use it over the Internet. Moving down to the next level of service,
+customers can deploy their own applications to \emph{platform as a service
+(PaaS)} clouds like Heroku, Microsoft Azure or Google App Engine. The service
+provided is a platform for applications with related application programming
+interfaces (APIs) and services for managing and monitoring the deployment. A
+PaaS cloud enables customers to focus on the application instead of
+infrastructure at the cost of losing control and ownership of it. One further
+level down, \emph{infrastructure as a service (IaaS)} clouds enable customers to
+provision virtualized infrastructure resources (virtual machines, storage,
+network) to build their own infrastructure, platform and application. IaaS gives
+the most control on the deployment, but requires considerably more management
+compared to the other service levels.
+
+Cloud service levels form a hierarchy with infrastructure at the bottom, a
+platform deployed on the infrastructure and software on the platform offered as
+a service to customers. A new service or application may be built by leveraging
+any of these service levels. For example, the Heroku PaaS platform uses Amazon’s
+EC2 infrastructure and an application deployed on Heroku will then complete the
+stack. On the other hand, an application could simply be deployed on EC2,
+skipping the PaaS layer, if it was deemed beneficial to gain additional control
+of the stack down to virtual infrastructure. Starting at a lower abstraction
+level increases the responsibilities of the application or organization
+operating it to include infrastructure or platform management as well as
+managing the application.
+
+Ultimately all deployment models and service levels are meant to provide
+scalable computing resources to customers. How to best benefit from scalability,
+which level if  and what it actually means in each case is up to the customer.
+
+\section{Scalability}
+\label{sec:scalability}
+
+Scalability is one of the elusive -ilities in information systems, a quality
+attribute whose importance is clear as workloads a system must handle grow to
+surpass trivial or initially planned quantities. Yet it is hard to pin down
+exactly what scalability means in each discussion of
+it~\cite{ScalabilityHill1990}.
+
+Computing resources are limited and eventually any system which grows in data or
+usage will saturate the resources available to it. The system may then also end
+up needlessly large or expensive in case resource requirements decrease
+afterwards. The resources in question may be e.g. processing capacity for
+computationally intensive systems or storage capacity for data intensive
+systems. Network capacity is a notable scalability point in distributed systems.
+Structural scalability concerns the internal design of a system and how the
+design lends itself to growth or shrinking of the system’s data model or, for
+example, its deployment.
+
+\subsection{Dimensions}
+
+%The vocabulary: scale up, out, down, in wrt vertical, horizontal  Scalability
+has multiple dimensions. Scaling is said to be \emph{vertical} if the scaling
+point or points in question are internal to some system component. For example,
+the amount of RAM available to a specific server or its CPU speed is a vertical
+scaling point in terms of that server. A vertically scaled system remains
+logically equivalent in the process of scaling. Scaling this way is
+straightforward as software requires no changes to take advantage of further
+resources on a system. In contrast, adding more server instances,
+\emph{horizontal} scaling, is a more coarse grained operation and requires
+software to be written specifically to leverage the multiple servers by running
+tasks in parallel~\cite{handbook-scaling}.
+
+%The following paragraph is possibly better suited for the rapid elasticity or
+elastic architectures chapter? Switching to a higher level of abstraction in
+system design changes the viewpoint from horizontal to vertical. Horizontal
+scaling of nodes in a server cluster or cloud can be considered vertical scaling
+from the viewpoint of the utility provided (e.g. processing capacity) by it to a
+higher level system using it as a component. This is how infrastructure as a
+service (IaaS) and platform as a service (PaaS) scaling viewpoints differ.
+Horizontal IaaS virtual machine scaling is vertical platform capacity scaling
+from the viewpoint of an application deployed on a PaaS cloud where the platform
+manages the infrastructure.
+
+The vertical dimension gets exponentially more expensive as the system size
+increases. The scaled system needs to be changed to a more capable type of
+server as the need for more resources increases past what the current server can
+physically support. This scaling path eventually leads to mainframes and
+supercomputers. The limits for horizontal scaling, on the other hand, are
+traditionally in the domain of data centers and the amount of servers that can
+fit on their racks. Horizontal scaling has been very common in Internet
+architectures since the early days of the network, but recently virtualization
+has made vertical scaling an important option to consider as well. System
+configuration can be adjusted dynamically at runtime in a matter of seconds,
+which is faster than the minute or two time frame of horizontal scaling in a
+cloud. A combination of both scaling dimensions can be used to implement a fine
+grained scaling solution.
+
+Cloud computing pushes both scaling dimensions past their traditional
+boundaries. Hybrid clouds and cloud interoperability make it possible to scale
+out a system past the boundaries of data centers and cloud providers. The
+network becomes the limiting factor here as the communication between nodes in a
+system needs to be transmitted between clouds over the Internet.
+
+A third dimension to consider is \emph{structural scalability} which has to do
+with the behavior of a piece of software as its data model, amount of data or
+amount of tasks to execute varies in size~\cite{handbook-scaling}. A requirement
+for scalable software is to be internally efficient in terms of the asymptotic
+time and space complexity of its algorithms~\cite{algorithmBook} and
+additionally support parallel processing in terms of tasks and
+data~\cite{foundationsOfParallelBook}.
+
+Task parallelism is a feature of software systems which are capable of
+simultaneously executing multiple tasks on the same or different data. A serial
+program, in contrast, must proceed with a single task at a time. Task parallel
+software lends itself well to horizontal scaling as separate tasks can be
+executed on distributed nodes of a system. Vertical scaling, on the other hand,
+can be applied to adjust the performance of each task independently.
+
+Data parallelism is the capability of a software system to perform the same
+operation in parallel to different instances of data. In distributed systems, a
+large computing task is typically split into multiple independent tasks which
+can be executed on separate server nodes simultaneously without communication
+between them. Results of the split tasks are then sent back to a controller
+which combines them and computes the final result. This was done in internet
+scale already back in 1999 with the Seti@Home project. Since then millions of
+ordinary computer users have donated CPU time to search for extraterrestrial
+intelligence by running an application which analyzes pieces of a large set of
+radio telescope data~\cite{Korpela2001}\cite{setiathomewebsite}. More recently
+Google and e.g. the open source distributed database Hadoop have made use of the
+MapReduce programming model \todo{mapreduce citation}  for distributed data
+parallel computing.
+
+Structural scalability is closely related to the horizontal scaling dimension.
+To take full advantage of horizontal scaling in, the application has to support
+parallel execution and minimize synchronization between the parallel threads of
+execution. Depending on the use case the parallelism can be either task or data
+based, but in both cases the notion of parallelism has to be built in to the
+application.
+
+\missingfigure{Illustrate scalability dimensions: horizontal, vertical, structural, }
+
+\subsection{Tradeoffs}
+
+Scaling a system is not without its negatives. Vertical scaling gets expensive
+at an exponential rate when the system grows in available resources. Horizontal
+scaling increases complexity for coordination. Structural scaling requires
+algorithm and data model design to fit the chosen scaling mechanism.
+
+Advances in computer science and technology have reduced the impact of these
+tradeoffs from what it used to be with older technology. Virtualization and
+dynamic provisioning of virtual machines have made it possible to use computing
+resources more efficiently in a modern data center. High capacity servers are
+not kept idle waiting for spikes in system load. Virtual resources can be
+allocated dynamically based on demand at any given time. Nevertheless, for
+vertical scaling, the cost is still the definitive tradeoff.
+
+Scaling horizontally, a common tradeoff point is the need for communication
+between nodes in a distributed system. If such communication can be avoided or
+minimized, the software scales well; Adding servers does not cause excessive use
+of network bandwidth or decrease the benefit gained by adding each new server
+due to increased processing needed for keeping the system more complex state
+synchronized. For data parallel computations, the MapReduce\todo{cross ref when
+there is more on MapReduce in later chapter} model enables this on a massive
+scale but requires algorithms to fit its mold with two distinct phases,
+\emph{map} and \emph{reduce}. The map phase distributes data to mapper nodes
+where it is processed. Intermediate results from the map phase are fed to
+reducer nodes for another round processing which ends with the final result.
+Both of the steps can be processed in parallel on distributed systems. The model
+clearly requires a specific approach to algorithm implementation in order to
+take advantage of parallel computation and is only applicable to structurally
+similar problems which can be expressed in terms of the map and reduce
+functions.
+
+Task parallel software can get congested due to synchronized access to common
+data. ACID (Atomicity, Consistency, Isolation, Durability) transactions are
+inherently serial in nature so a shared relational database, for example,
+quickly emerges as a bottleneck for scalability. To remedy this, databases can
+be scaled by applying various techniques such as
+sharding~\cite{introToSharding}. Need for ACID transactions should also be
+scrutinized. Many highly scalable systems make do with the BASE (Basically
+Available, Soft state, Eventually Consistent) consistency model in favor of the
+more strict ACID model\todo{cite BASE usage}.
+
+When scaling down or in, the tradeoff is with ensuring performance and
+reliability while minimizing cost. When a deployment is at its minimum size,
+it’s difficult to reliably react to increased load without false positives and
+try to keep the application responsive~\todo{citation for difficulty of deciding
+when to scale up}. Scaling up or out to accommodate the load will take some
+time, so the decision should be made early enough to keep the application
+responsive during the scaling activity. Ensuring performance, reliability and
+fault tolerance as required by e.g a service level agreement sets limits for the
+minimum system configuration. A capacity buffer of appropriate size has to be
+kept to allow time for scaling activities.
+
+At code level, in addition to the need for communication between horizontal
+nodes, tradeoffs are made between the asymptotic complexity of algorithms in
+terms of CPU time or data storage space needed for execution. System design
+principles are of key importance to minimize the impact of scalability
+tradeoffs.
+
+Scalability should be considered in context. Discussing e.g. only the CPU
+capacity of a system is a moot point if the system becomes overly complex or
+expensive to maintain due to the increase in computational capacity. Designing a
+system with one scalability factor in mind may reduce scalability in terms of
+other factors. Tradeoffs like these are important to understand when designing
+systems. The relative importance of scalability factors can be derived from the
+requirements of the system in question. By going after the most important
+factors, the utility (change introduced by scaling which the stakeholders
+experience as a tangible benefit)~\cite{DubocUtility} of the scaling effort is
+the highest.
+
+Scalability can be analyzed as a multi-criteria optimization problemwhere, given
+the priorities of the system in question, different scaling strategies will
+perform differently as the system grows. Multi-criteria analysis will help to
+choose the correct scaling factors from both technical and stakeholder benefit
+viewpoints as shown by Duboc in her work on the subject~\cite{Duboc2007}
+Choosing the strategy with the most utility for the system’s stakeholders should
+be the goal.
+
+\subsection{Bounds}
+
+%speedup, amount of work done in same time, asymptotic complexity Scalability
+analysis in the design phase of a system can save effort and costs during a
+system’s lifetime as changes are easiest and cheapest to make in the beginning.
+Any real system will have its bounds set by its environment and stakeholders
+through requirements expressed in terms of functional and non-functional
+requirements. Some requirements are harder to meet than others and an
+understanding of the laws of scalability helps in managing expectations and
+succeeding in system implementation. This chapter presents basic laws of
+scalability to establish the limits within which scalability engineering takes
+place.
+
+Typically a portion of any computation is not parallelizable. The size of this
+portion determines the lower bound in terms of execution time for a program
+according to Amdahl’s law~\cite{amdahlslaw}. The law can be expressed as a
+function which gives the maximum speedup $S$ that can be achieved with $N$ nodes
+working in parallel,
+
+\[
+S(N) = \frac{1}{(1-P)+\frac{P}{N}},
+\]
+
+where $P$ is the proportion of the program that can be executed in parallel and
+conversely $(1-P)$ the serial proportion. As $N$ tends to infinity, the speedup
+tends to $1/(1-P)$. \todo{include a graph of Amdahl’s law}
+
+For example, if a given computation has a serial part which is 10\% of the
+complete computation, then the benefit of increasing parallelism for the
+remainder of the computation will tend towards zero as the number of parallel
+nodes increases. The upper bound for $S(N)$ in this case is 10. The computation
+can be sped up at most by a factor of 10 regardless of the amount of parallel
+processors introduced to the system. Before reaching this theoretical limit,
+typically a practical limit for evenly dividing $P$ into parallel tasks or data
+sets would be reached \todo{cite practical limit of scaling in Amdahl’s land}.
+This implies that software design level structural scalability is very important
+in order to keep the non-parallelizable code to a minimum.
+
+Amdahl’s law underlines the importance of algorithmic optimization to maximize
+the speedup achievable with parallel processing. However, although the benefit
+of adding more parallel nodes tends to zero, the processing capacity of each of
+the nodes does not of course diminish in the process. In fact, the entire array
+of parallel nodes is idle for $1-P$ percent of the execution. To make efficient
+use of a horizontally scalable system, the problem therefore needs to be of a
+nature which benefits from a large number of $N$. That is, the proportion of
+inherently serial code $1-P$ needs to be minimized and the problem needs to be
+divisible to $N$ or more parallel parts.
+
+Dividing a fixed set of data or tasks can only be done in a limited number of
+practical ways. Amdahl’s law assumes a static size and even division for data
+over $N$ nodes and gives the maximum proportional speed but does not consider
+that more data or tasks can be processed in the same time. In practice, the
+benefit of parallel processing is larger given a problem with dynamic data or
+task set size. Having more data or tasks is key to being able to split them $N$
+ways. With virtualization, $N$ can also be adjusted to fit the input size.
+\todo{could also discuss efficiency of parallel processing, E = S/N.}
+
+Gustafson’s law~\cite{gustafsonslaw} shows that parallel processing is efficient
+given the right kind of problem. It assumes the serial fraction of computation
+$\alpha=1-P$ is static while the divisible amount of data or tasks grows evenly
+with the amount of parallel nodes $N$. The speedup  according to the law is then
+
+\[
+S(N) = N - \alpha(N-1).
+\]
+
+In practice $\alpha$ will also grow due to overhead caused by increased
+parallelism, but as long as the overhead is insignificant, Gustafson’s law shows
+that scaling horizontally is efficient up to large numbers of $N$ if the data or
+task size grows with the system.
+
+In contrast to Amdah’ls law, Gustafson shows that parallel computing in a
+dynamic environment (data divided into parts equal in amount to that of
+computing nodes) scales very well.
+
+\missingfigure{Graphs to roughly compare Amdahl’s law and Gustafson’s law}
+
+\todo{Gustafson’s law -> mapreduce}
+
+%Scalability models
+
+\section{Scalability in cloud infrastructures}
+\label{sec:cloudscalability}
+
+Public infrastructure clouds (IaaS clouds) make computing resources available to
+customers on a pay per use basis. Customers provision virtual servers, storage
+and networks from a pool of physical resources. Part of the allure of IaaS
+clouds is that the availability of further resources is made to seem infinite.
+Cloud service providers do set limits to the size of deployment under a single
+account, but those limits can be raised by separate agreement. The initial
+limits are there more to avert denial of service attacks than to safeguard
+against actual resource depletion.
+
+It is apparent that clouds are massively scalable systems in terms of
+performance, reliability, cost, maintenance and a multitude of other quality
+attributes when the size of deployment of physical hardware on which the virtual
+resources are provisioned varies. Cloud computing takes distributed computing
+forward by increasing dynamism in the structure of distributed systems.
+Virtualization enables quick provisioning and deprovisioning of servers, storage
+and networks. Setting up a public cloud infrastructure for a new business can be
+accomplished in a matter of minutes or hours. The pay-per-use model enables
+quick responsiveness to change since adding servers to the environment does not
+come with a large up front cost. Similarly, when removing servers from the
+system, the released capacity will not necessarily go to waste. It becomes
+available to other users of the cloud.
+
+This thesis focuses on the user level of IaaS clouds and the benefits attainable
+at that level for building scalable information systems. The underlying physical
+implementation of a cloud and scalability therein is left mostly out of scope.
+Higher levels of the cloud service stack (PaaS, SaaS) are not discussed
+directly, but the elasticity measures presented in later chapters do apply to
+them as well.
+
+In cloud context, the basic principles of scalability remain as discussed in
+chapter \ref{sec:scalability}. Vertical scaling is achieved by adjusting the
+performance of existing virtual machines by changing the amount of available
+resources. This can imply relocating the virtual machine to a different physical
+host if the current host can’t accommodate the scaled up
+VM~\cite{Verma2010-CostOfReconfigurationInCloud}. In practice, vertical scaling
+is currently slower than it could be due to limitations on adjusting CPU and RAM
+dynamically at runtime~\cite{VRB11}. Changing these parameters requires a
+restart and, for example on Amazon EC2, a newly provisioned VM instance will
+replace the old one. The process is heavy considering the gained benefit and as
+discussed above will grow exponentially expensive when resource demands
+increase.
+
+Horizontal scaling is where clouds excel. Virtual machines are cloned as needed
+and load is balanced among them. Scaling the network, load balancers and other
+infrastructure tools like monitoring is needed when the system grows to surpass
+their capacity~\cite{VRB11}.
+
+\subsection{Rapid elasticity}\todo{Differentiate scaling and rapid elasticity “rubber band”}
+
+A cloud is said to be elastic~\cite{nistdefinition} if the resources it provides
+can be provisioned and deprovisioned dynamically and automatically. This implies
+the necessity to monitor the cloud so that provisioning decisions can be made
+based on performance data. Provisioning must be automatic, i.e. decisions to
+scale out or scale in should be acted on without human intervention. This
+implies the need for cloud customers to access a programmatic interface with
+which cloud provisioning actions are carried out. The actions should resolve as
+fast as possible to enable constant matching of the size of deployment to
+service demand.
+
+%something about the physical level of cloud...?
+
+The benefit of elasticity is realized when the gap between demand and capacity
+can be kept as small as possible. When demand increases and more capacity is
+needed, rapid elasticity can enable the service to scale out quickly enough so
+that no requests need to be refused. Scaling in rapidly when demand decreases
+means unneeded resources are kept reserved for a shorter time and consequently
+less money is wasted on unused capacity. The utilization rate of provisioned
+resources can be kept at a better level compared to a system that would prepare
+for demand spikes by overprovisioning resources which then end up being idle
+during non peak demand.
+
+\missingfigure{graph of demand vs capacity with steps smaller using elastic
+cloud vs hardware (Handbook of cloud computing)}.
+
+\subsection{Virtual machine lifecycle} \label{sec:VMLifeCycle}
+
+Rapid elasticity is all about adjusting the size of a system by instantiating
+new virtual machines and terminating existing ones. This takes the VMs through a
+lifecycle. Optimizing this lifecycle is key to successful rapid elasticity.
+
+The VMs go through a number of phases during the lifecycle. The high level
+phases from an application perspective are
+
+\begin{itemize}
+\item template preparation,
+\item instance configuration,
+\item instance start,
+\item instance contextualization,
+\item instance monitoring (running state) and 
+\item instance termination.
+\end{itemize}
+
+In the template preparation phase, the virtual machine and its data is prepared
+up to a point from which it can be instantiated in the cloud. The template could
+be a basic installation of an operating system on virtual hardware or further
+specialized for a specific purpose. The tradeoff between generic and specialized
+templates is the time it takes to configure and contextualize an instantiated
+generic VM for a specific purpose and, on the other hand, the effort needed to
+maintain specialized templates.
+
+Instance configuration is the first phase on the way to instantiating a specific
+VM instance from the template. This phase may include steps like choosing the
+size of the VM instance i.e. how much memory and CPU capacity the instance will
+have. Network configuration is set at this phase as well as other virtual
+hardware configuration. Security settings such as SSH access keys are configured
+in this phase before VM is started up.
+
+With the template chosen and configuration set, the VM instance is ready to be
+started. This phase is in the cloud provider’s domain, but customers need to be
+able to monitor the progress in order to have up to date information on their
+deployment. Behind the scenes, the cloud provider chooses a physical server on
+which to allocate the VM instance and makes the necessary changes in their
+system to allocate portions of physical CPU, memory, storage and other resources
+to the VM.
+
+When the start is done, the customer system will learn of the availability of
+the new instance via some reporting mechanism offered by the cloud provider.
+This is typically an API query over HTTP, i.e. a request-response cycle. An
+event mechanism whereby the cloud notifies the customer would be preferred to
+shorten feedback time or the need to busy loop querying the status, but
+scalability and security considerations on the cloud provider side may prevent
+such a scenario.
+
+After starting up, the virtual machine needs to be contextualized for the
+dynamic runtime environment of the service it is part of. The VM could be added
+to a group of workers fetching work items from a queue or added to a load
+balanced cluster of application servers, for example. Monitoring and other
+infrastructure services are configured with runtime information at this point.
+To work around waiting time in a scenario where a controller component would
+connect to the new VM to perform contextualization tasks after it starts up, the
+virtual machine may be configured to pull its context from another server by
+executing a script at startup. Context may additionally be provided as a
+mountable block storage volume separate from the template. The Open
+Virtualization Format (OVF) standard advocates the use of ISO CD images for this
+purpose~\cite{ovf11}. Amazon and Eucalyptus among others provide a local network
+service for querying instance specific metadata over HTTP.
+
+There has been a lot of research activity regarding the contextualization phase
+in the form of describing one-off solutions to accomplish a specific goal like
+joining instantiated VMs to a scientific computing
+cluster~\cite{Kijsiponge2010}, standardizing an interface between VM instances
+and a configurator component to separate concerns of the VM internal
+implementation and deployment configuration by the inversion of control
+principle \cite{Liu2011} and using this phase to carry out tasks related to a
+higher level service management approach ~\cite{frominfratoservice}
+\cite{Kirschnick2010} \cite{Chapman2010}.
+
+After contextualization, the VM instance is in the running state. The VM carries
+out its tasks and reports its status as configured until, at some point in time,
+the VM will be shut down. The termination phase is where the VM should inform
+all related system components of its eventual termination so that the system as
+a whole can react to it by e.g. removing a load balancing setup or monitoring
+scope.
+
+These phases need to be customizable so that cloud customers can add their own
+logic in them. Template preparation, configuration, contextualization and
+termination phases are the main customization points. Automation tools like
+Puppet \cite{puppetlabswebsite} and Chef \cite{chefwebsite} exist to help system
+administrators carry out configuration tasks. Claudia \cite{frominfratoservice}
+proposes a new abstraction layer on top of IaaS to enable more purposeful cloud
+service management including use of multiple cloud service providers.
+
+\subsection{Triggers and bounds - monitoring an elastic cloud deployment}
+
+Clouds have the capability to scale, but system specific logic is needed to make
+decisions on when and how to scale. Scaling decisions can be based on the
+business requirements set for the system. Good requirements are measurable and
+unambiguous. What is measurable depends on the monitoring capabilities of the
+cloud system. The monitoring subsystem needs to be customizable so that service
+specific metrics can be included in the data set and scaling logic. Separate
+monitoring tools like Ganglia \cite{gangliapaper} and Nagios \cite{nagios} serve
+this purpose in hybrid or highly specialized configurations because the cloud
+customer has full control over the monitoring subsystem and it can be used in
+private clouds as well across the whole hybrid. The tradeoff is having to
+maintain that part of the system as well.
+
+Quality of monitoring data is important to make timely decisions. With large
+deployments, the amount of data can be large and analyzing it all can put load
+on the system. Data is typically aggregated from service tiers or groups of
+servers to reduce the amount of raw data that is to be processed by the
+monitoring subsystem. Another way to reduce monitoring load is to gather data at
+longer intervals. This quickly reduces the quality of the scaling metrics. Cloud
+systems aiming at just-in-time scalability already have to account for
+provisioning delays of tens of seconds or a few minutes. If the data on which
+scaling decisions are based is also a few minutes old, this makes the total
+reaction time sum up to e.g. 10 minutes. Balancing the monitoring overhead and
+scaling reaction time is an exercise needed to optimize each system.
+
+The metrics used to make scaling decisions are typically related to performance
+or fault tolerance. CPU and network load and available storage capacity are
+straightforward metrics on a subsystem level as well as a heartbeat metric
+indicating the live status of each VM. System-wide and service specific metrics
+like requests handled per second, time spent on each service tier and the size
+of work queues are understandable by business stakeholders and therefore usable
+for concretely agreeing on and discussing system performance. Such metrics are
+typical for quantifying the quality of service (QoS) and are referred to in
+service level agreements (SLA) \cite{Boloor2011} with specific limits for the
+metrics that should not be crossed.
+
+%predictive, reactive provisioning, Urgaonkar2008
+
+Operating a system has to be profitable or at least sustainable. Cost is often
+the upper bound for scaling a system in the cloud. Business stakeholders need to
+set limits above which the system is not allowed to scale based on cost. The
+lower bound is set by technical limitations of system architecture or business
+requirements on fault-tolerance and availability. Understanding the economics of
+IT systems deployed on clouds is a key success factor in the long run
+\cite{Suleiman2011}. Cloud adoption in enterprises begun with simple cost saving
+goals but is moving towards enablement of lean enterprises capable of quick
+changes in business direction.\todo{Find citation of shifting business goals
+with cloud}
+
+Clouds are a technology which levels the IT system playing field considerably
+between startups and large corporations. With the pay-per-use model, large up
+front investments in computing infrastructure are not required to start a
+business, yet the scalability is available in case the service popularity
+explodes.
+
+%quality of elasticity, Suleiman
+%performance variation of VMs
+
+\begin{itemize}
+\item Elasticity: when/how to scale
+	\begin{itemize}
+	\item Infrastructure prerequisites
+	\item Lifecycle
+	\item Triggers
+	\item Business considerations
+		\begin{itemize}
+		\item Elasticity window (min/max)
+		\end{itemize}
+	\end{itemize}
+\end{itemize}
+
+
+\section{Elastic system architecture}  
+\todo{Restructure this chapter to be
+about elasticity and going further into  detail with concepts hierarchically
+below elasticity! Architecture as a subsection.} 
+\label{sec:elasticarchitectures}
+\todo{start with explanation of elasticity vs scalability}
+
+
+
+\subsection{Elasticity as a controlled process}
+\label{elasticity_as_a_controlled_process}
+
+Response times to infrastructure provisioning requests in cloud services can be
+in the range of a few seconds. To effectively manage a system at such speeds it
+is essential that reactions to regularly occurring or anticipated events are
+built in to the system and automated.
+
+Concepts from process control theory and autonomic computing can be applied to
+implement a cloud application system which knows its state and reacts to changes
+in it. An essential part of such a system is a controller component external to
+the application itself. The responsibilities of the \emph{elasticity controller}
+are to monitor the system, analyse the metrics, plan corrective actions and
+execute them. This is known as a MAPE-K control loop \todo{cite MAPE-K} named
+after its phases (Monitor, Analyse, Plan, Execute, Knowledge). The knowledge in
+MAPE-K loops is shared data between the actual MAPE phases.
+
+The cloud application deployment is monitored and the configuration is adjusted
+based on metrics reported by monitoring agents (pieces of software) attached to
+the application or its environment. This attachment can be nonintrusive, where
+the agent is located outside the application and monitors external phenomena
+like network traffic or CPU load. Intrusive monitor attachment works by
+instrumenting the application or execution environment itself for monitoring
+(i.e. a Java application is instrumented using the java.lang.instrument API to
+monitor the internal workings of the JVM). Aspect oriented programming can be
+used to instrument at the application level to monitor metrics unique to the
+application or its business logic.
+
+\missingfigure{MAPE-K diagram!}
+
+Monitoring data is analysed by the controller in the corresponding phase of the
+MAPE-K loop. The raw sensor data is turned into knowledge in this phase. The
+MAPE-K knowledge can be an advanced modeled abstraction of the system where the
+data is fed into or simply a group of variables reflecting the state of the
+monitored system now and the way it is changing over time.
+
+Analysis of the system model may indicate that one or more criteria of
+acceptable system behavior are no longer met (reactive trigger) or some metric
+is about to exit its tolerated range (proactive trigger). Given such a
+situation, the controller will enter the plan phase with the purpose of creating
+a plan of action to bring the metric values back to or keep them in the
+tolerance zone. This plan can be based on a set of rules that govern the
+operation of the controller component or again a more elaborate model driven
+approach which approximates the behavior of the actual system.
+
+The execution phase is where the controller interfaces with the application and
+its environment to carry out the actions decided in the planning phase. This
+phase relies on automation APIs available for the environment and the runtime
+configurability of the application.
+
+The executed actions will cause changes in the behavior of the system which are
+then reported back to the controller in subsequent control loops.
+
+\subsection{Rules to satisfy requirements} The control loop needs metrics that
+are relevant to the system in question and bounds to specify acceptable value
+ranges for the metrics. Each metric and its acceptable range represent a
+\emph{requirement} for the controller. Rules for controlling the system are
+created with the purpose of making sure the system will always meet these
+requirements.
+
+Requirements expressed in terms of the implementation technology (system load,
+network traffic, etc.) are straightforward to set up for monitoring and further
+processing. If non-technical stakeholders like business decision makers are
+involved in the requirements elicitation, technical requirements may be
+difficult to communicate understandably. Therefore higher level requirements
+(e.g. cost per visit to a website, type of user activity, etc.) expressed in
+business terms may be the starting point of defining the elasticity requirements
+for a system.
+
+To monitor and make scaling decisions based on metrics expressed in business
+terms, it is necessary to instrument the application code or monitor the state
+of the application's domain model (database). This kind of monitoring takes more
+effort compared to non-intrusive technical metrics since the monitoring has to
+be customized for the application. The choice of customization or relying on
+lower level metrics is a tradeoff one has to make when designing an elastic
+system.
+
+A mapping from business requirements to technical requirements may be necessary
+to facilitate communication of the requirements from their source down to the
+implementation of the controller. \todo{cite requirement mapping}
+
+\subsection{Multi-criteria decision analysis} Often the requirements given for
+the performance of a system conflict each other. If, for example, a system is
+optimized in terms of response time by adding more virtual machines to the
+deployment, cost rises too high to operate the system. Or if memory usage is
+minimized by writing data to disk, the performance may suffer to increased
+access time to data. The requirements may form a complex network of this kind of
+interdependencies. It quickly becomes difficult to specify simple rules for
+satisfying all the requirements simultaneously.
+
+Multi-criteria decision analysis \todo{cite multi criteria analysis} is a method
+for finding an optimal decision considering conflicting criteria. It can be
+applied here to formalize the decision making under conflicting requirements.
+
+\missingfigure{Could show conflicting preference function graphs here and a pareto frontier with their mutually optimum points...}
+
+The multiple criteria are considered together by the use of a \emph{utility
+function}
+
+\begin{equation}
+U(X) = \sum\limits_{i=1}^k w_{i}P_{i}(X) \label{utilityfunction}
+\end{equation}
+
+with a normalized range $U(X) \in [0, 1]$, where a value of 0 denotes the worst
+possible utility and 1 denotes that the system fully satisfies its combined
+requirements. $X$ is a set of $j$ parameters $\{x_{1}, \dots, x_{j}\}$ which are
+needed to calculate the utility. Metric values and other knowledge of the system
+state are typical parameters. The utility function is a weighted sum of $k$
+\emph{preference functions} $P_{i}(X)$ with $1 \le i \le k$. Each elasticity
+related requirement is defined as a preference function $P_{i}$ with a
+normalized range $P_{i}(X) \in [0, 1]$, where a value of 0 denotes the worst
+possible preference for this requirement and 1 denotes that the requirement has
+been optimally fulfilled. The weights $w_{i}$ represent the relative importance
+of each preference function to overall utility, with $\sum_{i=1}^k w_{i} = 1$.
+
+
+\subsection{Quality of elasticity} The utility function (\ref{utilityfunction}),
+given business-related preferences, measures the business utility of a system
+with regard to its performance metrics. Plotting the utility over time as the
+usage pattern changes shows how the system responds to these changes. A perfecty
+elastic system would adjust its capacity to match or slightly surpass the
+required level for maximum utility. The aggregate measure of utility over time
+shows how well the system responds to changes, i.e. how well the system scales
+out and in as a response to changes in its environment.
+
+\missingfigure{Graph of utility function and the area above the x-axis labeled QoE}.
+
+The \emph{quality of elasticity} (QoE) for a system over time can be quantified
+as the integral of the utility function from some moment of time $a$ to time
+$b$:
+
+\begin{equation}
+QoE = \int\limits_a^b U(X)~dx \label{qoefunction}
+\end{equation}
+
+For real systems the utility function is represented by monitored metric values
+gathered over time rather than a mathematical function. In this case the
+integral can be approximated by means of numerical analysis. The trapezoid
+method \todo{cite trapezoid method} is used for this as the step from each data
+point to the next is linear and the method gives exact results in such a case
+\todo{cite trapezoid exact for linear, calculus book?}.
+
+The numerical trapezoid method version of the $QoE$ formula is
+
+\begin{equation}
+\int\limits_a^b U(X)~dx \approx 
+\frac{b-a}{2N}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k})) = 
+\frac{h}{2}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k})) 
+\label{qoefunctionnumerical}
+\end{equation}
+
+where $N$ is the amount of evenly spaced data point intervals and $X_{i}$ with
+$i \in [0, \dots, N]$ is the set of monitored metric values for utility data
+point $i$. The spacing of data points is denoted by $h = \frac{b-a}{N}$ which
+solves to $1$ when the data is evenly spaced and available for each interval.
+Finally with all simplifications applied, quality of elasticity is calculated
+with the following formula:
+
+\begin{equation}
+QoE = \frac{1}{2}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k})) \label{qoefunctionnumericalfinal}
+\end{equation}
+
+QoE is a measure of the quality of the elasticity controller's decision making
+and execution capability in the specific environment it is in. The behavior of
+the measured application and the strictness of elasticity related requirements
+given for the application influence QoE. The range of possible runtime QoE
+values has to be approximated or tested empirically by excercising the system in
+order to use QoE as a tool to reason about elastic performance. Table
+\ref{table:QoEFactors} lists notable QoE factors and attributes them to system
+components based on the components' infuence on the factor. The factors are both
+technical and business related in nature and are discussed in the remainder of
+this chapter.
+
+	\begin{table}[h]
+\resizebox{\linewidth}{!}{
+	    \begin{tabular}{| m{6cm} || >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} |}
+	    \hline
+	    \multirow{2}{*}{\textbf{QoE Factor}} & \multicolumn{4}{c |}{\textbf{System Component}} \\
+	    & Elasticity Controller & Cloud Provider & Application & Business modeling \\ \hline
+
+		Price - performance ratio & X & X & X & \\ \hline
+		Infrastructure pricing & & X & & \\ \hline	    
+		Billing granularity & & X & & \\ \hline
+	    VM provisioning speed & X & X & X & \\ \hline
+	    Metric data quality & X & X & & \\ \hline
+	    Decision making speed & X & & & \\ \hline
+	    Correctness of scaling decisions & X & & & \\ \hline
+		Level of parallelization & & & X & \\ \hline
+		Utility preferences & & & & X \\ \hline
+	    \end{tabular}
+}
+	    \caption{QoE factors and the system components which can affect them.}
+	    \label{table:QoEFactors}
+
+	\end{table}
+
+For good elasticity, the elasticity controller has to be fed with timely and
+correct information on the status of the system. The controller's monitoring
+subsystem has to be able to deliver relevant metrics quickly. The data should be
+such that it can be reliably used to make scaling decisions. Data jitter can be
+a problem as well so often aggregate data is preferred so trends can be
+analysed. There is a clear tradeoff between how quickly the metrics show a trend
+change and how reliable that indication is. These issues related to
+\textit{metric data quality} may need to be tuned specifically for each
+application.
+
+With quality metric data, the next step is to react on results of data analysis
+quickly and correctly. These factors, namely \textit{speed of decision making}
+and \textit{correctness of scaling decisions} are up to the elasticity
+controller. Decision making speed can vary based on the the implementation of
+the controller. Scaling decisions can be made reactively when metrics pass their
+thresholds or predictively based on predictive algorithms . In simple cases the
+predictive algorithm could be as simple as specifying time ranges throughout the
+day and scaling out or in according to typical usage. Learning algorithms do
+exist for more complicated usage patterns \todo{cite predictive scaling
+algorithms}. Predictive scaling is possible as long as there is some indicator
+in the metrics that can be used to decide that higher load is about to come. For
+web sites, sudden spikes of activity like click throughs from a social media
+discussion (``Slashdot effect'') with a link to some normally low usage server
+are impossible to predict. In such a case, the performance is up to how quickly
+the spike of activity is identified and whether the reaction to it matches the
+size of the spike.
+
+Scaling out horizontally is helpful if the application is structured to take
+advantage of it. The \textit{level of parallelization} exhibited by the
+application and its algorithms decides whether the elastic scaling will actually
+help with the application's performance. The theory of scalability was discussed
+in detail in chapter \ref{sec:scalability}.
+
+Assuming the application is well parallelizable, the \textit{price - performance
+ratio} then quantifies the performance received for a certain expenditure
+related to scalint out the deployment infrastructure. The ratio is mainly
+affected by the cloud provider as it sets the \textit{infrastructure pricing}
+for its offering and specifies the kind of resources available. The elasticity
+controller and the application implementation also have a role considering the
+effective use of the infrastructure. The controller should choose the amount and
+type of VM instances to fit the scenario. The elastic application should be
+implemented to use infrastructure resources in a way that matches the cloud
+provider's capabilities. Advanced optimizations in price - performance ratio may
+increase coupling of the application to the infrastructure specifics of the
+cloud provider. This can lead to increased effort required if the application is
+ever deployed elsewhere, i.e. cloud vendor lock-in.
+
+Further related to price, \textit{billing granularity} affects QoE \todo{cite
+billing granularity}. The minimum price paid for a provisioned VM instance as
+well as the billing interval in the pay-per-use model has an effect on
+economical use of the infrastructure. Cost of instantiation or termination could
+discourage scaling out and increase the level of commitment to infrastructure.
+The billing interval also relates to commitment. The typical hourly billing
+interval with no extra cost for instantiation or termination means it is
+irrelevant whether an instance is running for a minute or just short of an hour.
+Effective use of infrastructure needs to reflect this characteristic set by the
+cloud provider.
+
+\textit{VM provisioning speed} is a multi-faceted QoE factor. It concerns the
+effectiveness of VM lifecycle phases (see chapter \ref{sec:VMLifeCycle}) from
+configuration through start and contextualization to termination. An effectively
+configured VM image will complete contextualization faster, so the choices made
+in the configuration phase affect provisioning speed. If a VM is provisioned
+with a baseline configuration of just the operating system, contextualization of
+the instance has to include everything from installing application dependencies
+to configuring them and announcing the availability of the new instance to the
+application infrastructure. Moving some idempotent tasks like software and
+operating system update installation from contextualization to configuration can
+decrease provisioning time as configuration is done once before and the
+configured VM template image is cloned for each VM instance to use.
+
+Time spent in the starting and termination phases is up to the cloud provider as
+it is the provider's responsibility to reserve and release physical resources
+for the virtual machine. These phases are pure waiting time in terms of the
+elasticity controller and the application. Billing typically starts at the start
+of this phase, so cost of inefficiency is born by the cloud user \todo{cite
+billing start at instance start command receipt, not completion}. Similarly,
+billing stops at the completion of stopping/terminating the VM, so again the
+user can only hope for fast completion.
+
+Finally the ultimate bounds for QoE are set by \textit{utility preferences}. The
+preferences are modeled above as functions of metric data at a point in time.
+The definition of these functions determines the system's utility. The
+definitions of these functions need to be realistic and applicable to the
+deployment environment. If the definitions are unrealistic, the system may not
+exhibit any utility or quality of elasticity as defined here.  The preferences
+may need to be defined together with technical and business stakeholders to
+arrive at workable results. Preferences typically consider cost, response time, throughput and usage of storage space, memory or other resources but could be anything that is measurable and for which measured trends can be mapped to elastic scaling operations. An elicitation method like the Architectural
+Tradeoff Analysis Method \todo{cite ATAM} can be used to elicit the preferences
+from stakeholders. The ATAM method finds quality attributes that are pivotal to the success of a system to its stakeholders, but appears to require a lot of effort if applied to its full extent.
+
+\subsection{Elasticity controller architecture}
+
+%controller related architecture items
+\begin{itemize}
+\item elasticity enables design for failure
+\item The role of the controller component
+\item layers in cloud reference model (Tung2011) SYMPOSIUM PAPER, maybe Kirschnick2010 instead? Also CEM11, Kranas2012
+\item Interfaces
+	\begin{itemize}
+	\item Application insight (sensors)
+	\item Cloud infrastructure (actuators)
+	\item Management information systems (reporting)
+	\end{itemize}
+\item Scaling algorithms/rules based on metrics \& quality attributes
+\item elastic service definition language (Chapman)
+\item Claudia tool
+\end{itemize}
+
+\subsection{Elastic application architecture}
+
+Successful deployment of applications and services on a cloud infrastructure
+requires a scalable application architecture. The cloud is not a silver bullet
+for scalable software. The software has to be built to take advantage of the
+environment.
+
+Algorithms for parallel computation like MapReduce and architectural patterns
+like master/worker and cell based architecture are important building blocks of
+harnessing the processing power of a cloud service. The general rule is to
+design the architecture so as to have as few as possible shared components in a
+deployment. Shared components will end up being the bottlenecks when scaling out
+for two reasons; They get hit the hardest from multiple other system components
+when the system is under heavy load and they are often harder to scale
+themselves \todo{Cite shared component hard to scale}. Also the unavailability
+of a shared component can have far reaching effects on the whole application.
+Shared components quickly become single points of failure \todo{cite}.
+
+Public cloud services are built on commodity hardware. The durability and
+serviceability of this kind of hardware is by no means in the same class as that
+of mainframe hardware. The way to cope with failure of relatively cheap hardware
+is to accept it happens and design for failure \todo{cite amazon best practices
+or oreilly patterns book if not an academic paper}. Cloud resource pricing is
+based on low margins and high volume \todo{cite} and best practices advocate
+``buying insurance'' by adding redundancy at every step.
+
+Designing for failure implies automating infrastructure and application
+deployment and maintenance tasks as fully as possible. Automated recovery from
+server failures can be implemented quite simply by terminating a misbehaving
+server instance and provisioning another one to replace it. This is in fact one
+of the scenarios Amazon Web Services covers in their SLA \todo{cite amazon ec2
+sla}. Notable omissions from the SLA are server instance uptime and performance.
+This underlines the design for failure philosophy of their cloud service
+offering.
+
+\todo{Mention netflix chaos monkey wrt design for failure}
+
+
+%app related architecture items
+\begin{itemize}
+\item elasticity enables design for failure
+\item What kind of apps/architectures can benefit from elasticity
+\item Data intensive, how to benefit? (IO bound, memory bound)
+\item Computation intensive, how to benefit? \todo{HASN'T THE ABOVE BEEN COVERED ALREADY?}
+\item Other categories? Mobile?
+\item How does an application provide information on performance based on which it can be scaled?
+	\begin{itemize}
+	\item Quality of elasticity
+	\item Scaling metrics
+		\begin{itemize}
+		\item Requests per time period?
+		\item Depth of work queue?
+		\item Computational patterns?
+		\item Event broadcast mechanism?
+		\item Other way to relay information?
+		\item Aspect oriented? Cross-cutting concern
+		\item Latency
+		\item Costs (VM hours, ...)
+		\item SLA
+		\end{itemize}
+	\end{itemize}
+\end{itemize}
+
+% ARCHITECTURE STUFF:
+
+% Parallel computation needs to have architecture level facilities.
+
+% Web applications are easy in this respect as long as the database does not form a bottleneck. That can be mitigated by relaxing ACID to BASE, for example.
+
+% MapReduce is another type of algorithm that is straightforward to implement
+% architecturally. Split computation into tasks, send them away to the cloud and
+% combine results when you get them back.
+
+% Statelessness is an important property for scalable architectures. The components involved in scaling should not contain state information.
+
+% Anything that intrinsically requires serial computation is bad and can't be
+% helped with architectural excellency.
+
+% Master/Worker pattern description here. 
+
+% Cell based architecture? http://highscalability.com/blog/2012/5/9/cell-
+% architectures.html
+
+% IEEEXplore: cloud application architecture
+
+% High availability archicture, divide functionality in zones horizontally:
+% http://www.oracle.com/technetwork/articles/cloudcomp/jimerson-ha-arch-
+% cloud-1669855.html
+
+% Describe difference from machine based vertical silos to a horizontal array of
+% independent services.
+
+% Amazon documentation, cloud best practices, architecting for the cloud.
+
+% High availability, high scalability!
+
+%architecture for applications/systems deployed on cloud
+%deployment using ovf specification and extensions for elasticity, Galan2009
+%---> Not possible in practice so have to roll your own
+%SOA is stateless requests, easy to load balance horizontally
+
+%shared nothing architecture.
+%cloud reference model layers in context of iaas paas: Tung, 
+%
+%multitenancy
+%
+%SPOSAD architectural style
+%%avoid vendor lock in
+%
+%ESOA, ECSA, Tang
+%
+%Queuing model QoS scaling (PaaS) CRB11
+%
+%\cite{Tung2011}
+
+\section{Elasticity controller prototype}
+\label{sec:elasticitycontroller}
+
+This chapter details the elasticity controller prototype that was implemented for this thesis as a tool to evaluate the controllability of scalable application deployment on a cloud platform. The technologies and software components used in the implementation of the controller are presented as well as the simple controlled application and environment.
+
+\subsection{Business application}
+
+The ``business application'' used for the tests is a simple Java servlet application implemented using the Spring framework, version 3.0. Upon receiving a HTTP POST request, the application calculates a million random integers and returns the last one as a JSON response. The application is clearly useless for any real purpose and is simply written to represent a CPU bound highly parallelizable computation task. The application is stateless, which makes it easy to spread the random number calculation requests among any number of servers running the same code. The use of JSON as a data format is intended to make the application resemble a standalone service oriented architecture (SOA) service.
+
+\subsection{Deployment environment}
+
+The environment has been set up using the Chef infrastructure automation tool. All installation and configuration is done with scripts written in Ruby. In Chef terminology, these are referred to as recipes within cookbooks. Chef manages the state of the deployment on a separate server which is a part of the infrastructure. Each server node managed by Chef runs the chef client daemon which periodically connects to the Chef server and configures the node to match the state received from the Chef server. All following infrastructure components are provisioned, installed, configured and integrated with Chef using a infrastructure as code approach.
+
+The application is deployed on a Java application server (jetty) in the Amazon EC2 cloud environment. Requests pass through a load balancer (nginx) which distributes them to application server nodes using a simple round robin algorithm. Each of the servers runs the ganglia monitoring daemon (gmond), which sends metric data to a separate monitoring server (Ganglia). The Ganglia server runs the gmetad daemon which stores and aggregates metric data from all servers.
+
+
+
+
+
+\missingfigure{deployment diagram}
+\missingfigure{make a table of server apps / support apps and their versions.}
+
+
+\section{Prototype performance}
+\label{relatedwork}
+
+This chapter discusses the performance of the elasticity controller prototype and the test application in terms of utility preferences and the overall quality of elasticity for the setup. 
+
+\section{Conclusion}
+\label{conclusion}
+
+Summary and conclusion.
+
+
+% --- Back matter ---
+%
+% bibtex is used to generate the bibliography. The babplain style
+% will generate numeric references (e.g. [1]) appropriate for theoretical
+% computer science. If you need alphanumeric references (e.g [Tur90]), use
+%
+% \bibliographystyle{babalpha-lf}
+%
+% instead.
+
+%\nocite{*}
+
+\bibliographystyle{babplain-lf}
+\bibliography{bibliography/ThesisStructure}
+
+
+\end{document}
+
+
+%Citing ~\cite{kilpelainen00}.
+
+
+%\begin{figure}[h]
+%%\begin{figure}[tbh] t= top, b = bottom, h=here
+%\ \newline
+%\begin{center}
+%\includegraphics[width=0.9\textwidth]{kuvaesimerkki.pdf}
+%%\rotatebox{90}{\includegraphics[scale=.75]{kuvaesimerkki.pdf}}
+%\caption{Figure elements.}
+%\label{kuvaesimerkki}
+%\end{center}
+%\end{figure}
+
+% Attempt at pdf graph inclusion: 
+% \begin{figure}[h]
+% \centering
+% \includegraphics[width=0.8\textwidth]{images/meanvalue}
+% \caption{Average queue size}
+% \label{fig:meanvalue}
+% \end{figure}
