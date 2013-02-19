@@ -1,1 +1,1 @@
-Master's thesis on cloud elasticity.
+Master's thesis on cloud elasticity. Work in progress.
