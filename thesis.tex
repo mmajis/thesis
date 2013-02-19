@@ -776,7 +776,7 @@ below elasticity! Architecture as a subsection.}
 
 
 \subsection{Elasticity as a controlled process}
-\label{elasticity_as_a_controlled_process}
+\label{sec:elasticity_as_a_controlled_process}
 
 Response times to infrastructure provisioning requests in cloud services can be
 in the range of a few seconds. To effectively manage a system at such speeds it
@@ -788,9 +788,10 @@ implement a cloud application system which knows its state and reacts to changes
 in it. An essential part of such a system is a controller component external to
 the application itself. The responsibilities of the \emph{elasticity controller}
 are to monitor the system, analyse the metrics, plan corrective actions and
-execute them. This is known as a MAPE-K control loop \todo{cite MAPE-K} named
-after its phases (Monitor, Analyse, Plan, Execute, Knowledge). The knowledge in
-MAPE-K loops is shared data between the actual MAPE phases.
+execute them. This is known as a MAPE-K control
+loop~\cite{Huebscher2008}\cite{Mueller2009} named after its phases (Monitor,
+Analyse, Plan, Execute, Knowledge). The knowledge in MAPE-K loops is shared data
+between the actual MAPE phases.
 
 The cloud application deployment is monitored and the configuration is adjusted
 based on metrics reported by monitoring agents (pieces of software) attached to
@@ -875,7 +876,7 @@ The multiple criteria are considered together by the use of a \emph{utility
 function}
 
 \begin{equation}
-U(X) = \sum\limits_{i=1}^k w_{i}P_{i}(X) \label{utilityfunction}
+U(X) = \sum\limits_{i=1}^k w_{i}P_{i}(X) \label{eq:utilityfunction}
 \end{equation}
 
 with a normalized range $U(X) \in [0, 1]$, where a value of 0 denotes the worst
@@ -891,7 +892,7 @@ been optimally fulfilled. The weights $w_{i}$ represent the relative importance
 of each preference function to overall utility, with $\sum_{i=1}^k w_{i} = 1$.
 
 
-\subsection{Quality of elasticity} The utility function (\ref{utilityfunction}),
+\subsection{Quality of elasticity} The utility function (\ref{eq:utilityfunction}),
 given business-related preferences, measures the business utility of a system
 with regard to its performance metrics. Plotting the utility over time as the
 usage pattern changes shows how the system responds to these changes. A perfecty
@@ -988,15 +989,15 @@ controller. Decision making speed can vary based on the the implementation of
 the controller. Scaling decisions can be made reactively when metrics pass their
 thresholds or predictively based on predictive algorithms . In simple cases the
 predictive algorithm could be as simple as specifying time ranges throughout the
-day and scaling out or in according to typical usage. Learning algorithms do
-exist for more complicated usage patterns \todo{cite predictive scaling
-algorithms}. Predictive scaling is possible as long as there is some indicator
-in the metrics that can be used to decide that higher load is about to come. For
-web sites, sudden spikes of activity like click throughs from a social media
-discussion (``Slashdot effect'') with a link to some normally low usage server
-are impossible to predict. In such a case, the performance is up to how quickly
-the spike of activity is identified and whether the reaction to it matches the
-size of the spike.
+day and scaling out or in according to typical usage. Advanced algorithms do
+exist for more complicated usage patterns~\cite{Iqbal2011}\cite{Tan2012}\cite{Roy2011}\cite{Chen2011}\cite{Wilkes2010}\cite{Cunha2011}. Predictive scaling is
+possible as long as there is some indicator in the metrics that can be used to
+decide that higher load is about to come. For web sites, sudden spikes of
+activity like click throughs from a social media discussion (``Slashdot
+effect'') with a link to some normally low usage server are impossible to
+predict. In such a case, the performance is up to how quickly the spike of
+activity is identified and whether the reaction to it matches the size of the
+spike.
 
 Scaling out horizontally is helpful if the application is structured to take
 advantage of it. The \textit{level of parallelization} exhibited by the
@@ -1018,16 +1019,16 @@ increase coupling of the application to the infrastructure specifics of the
 cloud provider. This can lead to increased effort required if the application is
 ever deployed elsewhere, i.e. cloud vendor lock-in.
 
-Further related to price, \textit{billing granularity} affects QoE \todo{cite
-billing granularity}. The minimum price paid for a provisioned VM instance as
-well as the billing interval in the pay-per-use model has an effect on
-economical use of the infrastructure. Cost of instantiation or termination could
-discourage scaling out and increase the level of commitment to infrastructure.
-The billing interval also relates to commitment. The typical hourly billing
-interval with no extra cost for instantiation or termination means it is
-irrelevant whether an instance is running for a minute or just short of an hour.
-Effective use of infrastructure needs to reflect this characteristic set by the
-cloud provider.
+Further related to price, \textit{billing granularity} affects
+QoE~\cite{Brebner2012a}\cite{Islam2012}\cite{Mao2011}\cite{VandenBossche2010}.
+The minimum price paid for a provisioned VM instance as well as the billing
+interval in the pay-per-use model has an effect on economical use of the
+infrastructure. Cost of instantiation or termination could discourage scaling
+out and increase the level of commitment to infrastructure. The billing interval
+also relates to commitment. The typical hourly billing interval with no extra
+cost for instantiation or termination means it is irrelevant whether an instance
+is running for a minute or just short of an hour. Effective use of
+infrastructure needs to reflect this characteristic set by the cloud provider.
 
 \textit{VM provisioning speed} is a multi-faceted QoE factor. It concerns the
 effectiveness of VM lifecycle phases (see chapter \ref{sec:VMLifeCycle}) from
@@ -1058,11 +1059,18 @@ definitions of these functions need to be realistic and applicable to the
 deployment environment. If the definitions are unrealistic, the system may not
 exhibit any utility or quality of elasticity as defined here.  The preferences
 may need to be defined together with technical and business stakeholders to
-arrive at workable results. Preferences typically consider cost, response time, throughput and usage of storage space, memory or other resources but could be anything that is measurable and for which measured trends can be mapped to elastic scaling operations. An elicitation method like the Architectural
-Tradeoff Analysis Method \todo{cite ATAM} can be used to elicit the preferences
-from stakeholders. The ATAM method finds quality attributes that are pivotal to the success of a system to its stakeholders, but appears to require a lot of effort if applied to its full extent.
+arrive at workable results. Preferences typically consider cost, response time,
+throughput and usage of storage space, memory or other resources but could be
+anything that is measurable and for which measured trends can be mapped to
+elastic scaling operations. An elicitation method like the Architectural
+Tradeoff Analysis Method~\cite{ATAM} can be used to elicit the preferences from
+stakeholders. The ATAM method finds quality attributes that are pivotal to the
+success of a system to its stakeholders, but appears to require a lot of effort
+if applied to its full extent.
 
 \subsection{Elasticity controller architecture}
+
+Technology independent explanation of elasticity controller architecture goes here.
 
 %controller related architecture items
 \begin{itemize}
@@ -1101,7 +1109,7 @@ Shared components quickly become single points of failure \todo{cite}.
 Public cloud services are built on commodity hardware. The durability and
 serviceability of this kind of hardware is by no means in the same class as that
 of mainframe hardware. The way to cope with failure of relatively cheap hardware
-is to accept it happens and design for failure \todo{cite amazon best practices
+is to accept it happens and design for failure  \todo{cite amazon best practices
 or oreilly patterns book if not an academic paper}. Cloud resource pricing is
 based on low margins and high volume \todo{cite} and best practices advocate
 ``buying insurance'' by adding redundancy at every step.
@@ -1115,7 +1123,7 @@ sla}. Notable omissions from the SLA are server instance uptime and performance.
 This underlines the design for failure philosophy of their cloud service
 offering.
 
-\todo{Mention netflix chaos monkey wrt design for failure}
+\todo{Mention netflix chaos monkey wrt design for failure, maybe throw in the FAAS tech report \cite{FAASBerkeleyTechRep}}
 
 
 %app related architecture items
@@ -1195,33 +1203,230 @@ offering.
 %
 %\cite{Tung2011}
 
-\section{Elasticity controller prototype}
-\label{sec:elasticitycontroller}
+\section{Elastic scaling prototype setup}
+\label{sec:elasticScalingPrototypeSetup}
 
-This chapter details the elasticity controller prototype that was implemented for this thesis as a tool to evaluate the controllability of scalable application deployment on a cloud platform. The technologies and software components used in the implementation of the controller are presented as well as the simple controlled application and environment.
+This chapter details the elasticity controller prototype that was implemented
+for this thesis as a tool to evaluate the controllability of scalable
+application deployment on a cloud platform. The aim of the prototype
+implementation was to
+
+\begin{itemize}
+	\item{find out what solutions exist to implement an elasticity controller
+	 without depending on a specific cloud infrastructure provider's elasticity 
+	 services,}
+	\item{explore the real world problems of making elastic scaling decisions and}
+	\item{test the QoE concept in practice.}
+\end{itemize}
+
+The prototype was designed to be cloud provider agnostic. The Amazon EC2 cloud
+platform is used here as the deployment platform, but all components are
+implemented using open source software with the intention of supporting any
+single cloud platform or multiple platforms at once. Deploying an application
+over multiple clouds serves to increase fault tolerance \todo{cite cross cloud
+fault tolerance}. On the other hand, not tying up the application to proprietary
+cloud provider APIs helps to avoid cloud vendor lock-in, which could make
+migration to other deployment platforms cost-prohibitive in the long run.
+
+The technologies and software components used in the implementation of the
+controller as well as the simple controlled application and environment are
+presented in the following chapters.
 
 \subsection{Business application}
 
-The ``business application'' used for the tests is a simple Java servlet application implemented using the Spring framework, version 3.0. Upon receiving a HTTP POST request, the application calculates a million random integers and returns the last one as a JSON response. The application is clearly useless for any real purpose and is simply written to represent a CPU bound highly parallelizable computation task. The application is stateless, which makes it easy to spread the random number calculation requests among any number of servers running the same code. The use of JSON as a data format is intended to make the application resemble a standalone service oriented architecture (SOA) service.
+The ``business application'' used for the tests is a simple Java servlet based
+Service Oriented Architecture (SOA) service implemented using the Spring
+framework, version 3.1.1. The application was originally started as a proof of
+concept application for an information technology consultancy company's internal
+capability development initiative and contains more code than is used in the
+context of this elasticity controller prototype test.
 
-\subsection{Deployment environment}
+Upon receiving a HTTP POST request, the business service calculates a million
+random integers and returns the last one as HTTP response header. The service is
+clearly useless for any real purpose and is simply written to represent a CPU
+bound highly parallelizable computation task. The application does not store
+user state, which makes it easy to spread the service requests among any number
+of servers running the same code.
 
-The environment has been set up using the Chef infrastructure automation tool. All installation and configuration is done with scripts written in Ruby. In Chef terminology, these are referred to as recipes within cookbooks. Chef manages the state of the deployment on a separate server which is a part of the infrastructure. Each server node managed by Chef runs the chef client daemon which periodically connects to the Chef server and configures the node to match the state received from the Chef server. All following infrastructure components are provisioned, installed, configured and integrated with Chef using a infrastructure as code approach.
+The application is deployed on the Amazon EC2 IaaS platform. The minimal
+configuration consists of one application server (jetty 8.1.7.v20120910) and a
+load balancer (nginx version x.x.x\todo{check nginx version}). The requests
+first arrive at the load balancer which allocates them to any number of
+configured application servers using a simple round robin algorithm. Scaling out
+for this application means
 
-The application is deployed on a Java application server (jetty) in the Amazon EC2 cloud environment. Requests pass through a load balancer (nginx) which distributes them to application server nodes using a simple round robin algorithm. Each of the servers runs the ganglia monitoring daemon (gmond), which sends metric data to a separate monitoring server (Ganglia). The Ganglia server runs the gmetad daemon which stores and aggregates metric data from all servers.
+\begin{itemize}
+	\item{provisioning more application server instances,}
+	\item{contextualizing the instances to work as part of the application 
+	infrastructure and}
+	\item{changing the infrastructure configuration to account for the newly 
+	provisioned instances.}
+\end{itemize}
 
-
-
-
+Figure \ref{fig:deploymentdiagram} shows the deployment diagram for the
+application along with elasticity controller components which will be discussed
+in further chapters.
 
 \missingfigure{deployment diagram}
+
+\todo{this stuff about prototype elasticity preferences may be better to put in the results chapter?}
+The elasticity requirements for this application are related to response time
+and cost. These requirements conflict as reducing response time by adding more
+server instances will increase the cost.
+
+The response time requirement states that the application must respond to
+requests within $responseTime_{min} = 0.8$ to $responseTime_{max} = 1.5$
+seconds. The response time preference decreases linearly from the maximum value
+1.0 down to zero as the response time grows from 0.8 to 1.5 seconds. \todo{math
+notation for preference and utility functions in practice?} The response time is
+measured at the application server using an instrumented\footnote{The monitoring
+instrumentation is done using the Codahale Metrics library version
+3.0.0-SNAPSHOT available at \url{https://github.com/codahale/metrics}} wrapper
+for the standard Jetty request handler. Network latencies are therefore
+unaccounted for.
+
+The cost requirement is specified based on the cost of each service request. As
+a simplification, each VM instance is considered to cost 1 currency units per
+hour. A maximum cost of 20 currency units is given as the upper bound to limit
+scaling out indefinitely. The cost preference function is defined as a
+normalized linear mapping in the range $[0\dots1]$ from a minimum cost per
+request $costPerRequest_{min}$ to a maximum cost per request
+$costPerRequest_{max}$ of 1.0. $costPerRequest_{min}$ is further defined as the
+cost per VM instance $costPerVM$ divided by the maximum measured average server
+throughput (requests per second) $okThroughputPerVM$ when the average response
+time is less than $responseTime_{min}$, i.e.
+
+\[
+costPerRequest_{min} = 
+\frac{costPerVM}{okThroughputPerVM} 
+\]
+
+where $responseTime < responseTime_{min}$.
+
+The application running on \textit{m1.small} instances on Amazon EC2 will
+typically handle approximately 3 requests per second with a response time less
+than the $responseTime_{min}$ of 0.8 seconds. This makes $costPerRequest_{min}$
+roughly equal to 0.3 currency units.
+
+
+
+\subsection{Elasticity controller}
+
+The prototype elasticity controller is distributed between multiple server nodes
+in the environment. The controller exists to answer three basic questions on
+elastic scaling, namely 
+\begin{itemize}
+	\item{\textit{when} to scale,}
+	\item{\textit{how much} and \textit{in which direction} to scale and}
+  	\item{\textit{how} to scale}.
+\end{itemize}
+
+These questions map to the MAPE-K phases of analysis, planning and execution.
+Here the deployment is described in terms of the MAPE-K (see
+chapter~\ref{sec:elasticity_as_a_controlled_process}).
+
+\textit{Monitoring} is implemented using the Ganglia monitoring
+system~\cite{gangliapaper}. The application servers and the load balancer run the
+Ganglia monitoring daemon (\textit{gmond}), which sends metric data to a
+separate monitoring server. The Ganglia monitoring server runs both the
+\textit{gmond} and \textit{gmetad} daemons together aggregate and store metric
+data from all monitored servers. 
+
+The \textit{analysis} and \textit{planning} phases are the responsibility of an
+elasticity controller application written specifically for this prototype. The
+controller queries the Ganglia server for system state metrics every 20 seconds
+and calculates the utility based on the preference functions defined for the
+business application. The controller first analyses the system utility. If
+utility is below a threshold of 0.5 \todo{Remember to update final utility
+scaling threshold!}, a decision is made to carry out a scaling operations. The
+controller then proceeds to the planning phase.
+
+For the purpose of making a plan to scale the system either out or in, the
+controller application uses a \text{scaling function} $S(X)$ to indicate the
+needed direction and distance from optimum utility. The range of $S(X)$ is
+$[-1\dots1]$. A value of $-1$ represents the maximum impulse to scale in while a
+value of $1$ represents the maximum impulse to scale out. To factor in the
+direction of scaling, the preference functions are divided into two groups based
+on requiring either scaling out or scaling in to improve their value.  The
+scaling function then takes the form
+
+\begin{equation}
+S(X) = \sum\limits_{i=1}^j w_{i}^{in}P_{i}^{in}(X) + 
+		\sum\limits_{i=1}^k w_{i}^{out}P_{i}^{out}(X).
+\label{eq:scalingfunction}
+\end{equation}
+
+The weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two groups so that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k w_{i}^{out} = 1$.
+
+
+
+In addition to the scaling function, the elasticity controller detects trends in
+response time by keeping track of the request response time in 5-minute moving
+window. The slope of response time is is calculated based on the metric value 5
+minutes ago and currently. If the slope is above a
+
+With this definition of $S(X)$, it is possible that positive scale out
+preferences and negative scale in preferences cancel each other out. For this
+reason, a
+
+..$S(X)$ is derived from $U(X)$ by determining the direction of scaling needed to 
+improve each preference function's value. The values of preference functions 
+which require scaling in to improve are negated. Otherwise the function is equal 
+to $U(X)$.\todo{What to do to get -1 value if the WEIGHT of cost is less than 
+one? Normalize?} 
+
+...The value of the utility function (\ref{eq:utilityfunction} is calculated in 
+the analysis phase. If the value is below a threshold of 
+
+...The concept of utility is expanded to indicate the direction of scaling needed 
+to arrive at optimal utility by 
+
+The controller application delegates \textit{execution} of the plan to a
+infrastructure automation tool called Chef. Chef is a cloud age tool which
+enables an \textit{infrastructure as code} approach to IT operations. All
+installation and configuration is done with scripts written in Ruby. In Chef
+terminology, these are referred to as recipes within cookbooks. Chef manages the
+state of the deployment on a separate server which is a part of the
+infrastructure. Each server node managed by Chef runs the chef client daemon
+which periodically connects to the Chef server and configures the node to match
+the state received from the Chef server.
+
+The MAPE-K \textit{knowledge} is a shared concept between the controller
+application, Ganglia and the Chef server. The controller keeps track of trend
+averages of metrics it fetches from Ganglia and system contextualization is done
+based on system state information managed by Chef. The load balancer server runs
+\textit{chef-client} every 30 seconds. This is how knowledge of application
+servers is updated at the load balancer. Similarly the address of the monitoring
+server is read from Chef every time a new node is configured (and periodically
+during the node's lifetime). Any change in system configuration due to scaling
+operations gets updated to live nodes in this way.
+
+
+on a dedicated node external to
+the cloud environment as a nod to its cross cloud ideology. In this case,
+however, only a single cloud provider is used.
+
+
+
+
+
+The environment has been set up using the Chef infrastructure automation tool.
+
+
+
+
+
+
+
 \missingfigure{make a table of server apps / support apps and their versions.}
 
 
-\section{Prototype performance}
+\section{Prototype test results}
 \label{relatedwork}
 
-This chapter discusses the performance of the elasticity controller prototype and the test application in terms of utility preferences and the overall quality of elasticity for the setup. 
+This chapter discusses the performance of the elasticity controller prototype
+and the test application in terms of utility preferences and the overall quality
+of elasticity for the setup.
 
 \section{Conclusion}
 \label{conclusion}
