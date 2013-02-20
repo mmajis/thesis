@@ -1118,7 +1118,7 @@ Designing for failure implies automating infrastructure and application
 deployment and maintenance tasks as fully as possible. Automated recovery from
 server failures can be implemented quite simply by terminating a misbehaving
 server instance and provisioning another one to replace it. This is in fact one
-of the scenarios Amazon Web Services covers in their SLA \todo{cite amazon ec2
+of the scenarios Amazon Web Services covers in their SLA\todo{cite amazon ec2
 sla}. Notable omissions from the SLA are server instance uptime and performance.
 This underlines the design for failure philosophy of their cloud service
 offering.
@@ -1356,14 +1356,19 @@ S(X) = \sum\limits_{i=1}^j w_{i}^{in}P_{i}^{in}(X) +
 \label{eq:scalingfunction}
 \end{equation}
 
-The weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two groups so that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k w_{i}^{out} = 1$.
+The weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two
+groups so that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k
+w_{i}^{out} = 1$.
 
-
+\todo{write here about normal growth scaling plan}
 
 In addition to the scaling function, the elasticity controller detects trends in
-response time by keeping track of the request response time in 5-minute moving
-window. The slope of response time is is calculated based on the metric value 5
-minutes ago and currently. If the slope is above a
+response time by keeping track of the request response time in a 5-minute moving
+window. The slope $k_{r}$ of response time is calculated based on the delta of
+the metric value 5 minutes ago and currently. If $k_{r} > 200 \frac{ms}{min}$,
+the trend is considered a \textit{spike}, a sudden lage increase in activity.
+
+\todo{spike scaling plan description}
 
 With this definition of $S(X)$, it is possible that positive scale out
 preferences and negative scale in preferences cancel each other out. For this
@@ -1381,7 +1386,7 @@ the analysis phase. If the value is below a threshold of
 ...The concept of utility is expanded to indicate the direction of scaling needed 
 to arrive at optimal utility by 
 
-The controller application delegates \textit{execution} of the plan to a
+The controller application delegates \textit{execution} of the plan to an
 infrastructure automation tool called Chef. Chef is a cloud age tool which
 enables an \textit{infrastructure as code} approach to IT operations. All
 installation and configuration is done with scripts written in Ruby. In Chef
@@ -1407,19 +1412,35 @@ the cloud environment as a nod to its cross cloud ideology. In this case,
 however, only a single cloud provider is used.
 
 
-
-
-
 The environment has been set up using the Chef infrastructure automation tool.
 
 
 
+\begin{center}
 
+	\begin{table}[h]
+\resizebox{\textwidth}{!}{
+	    \begin{tabular}{| l | r | p{6cm} |}
+	    \hline
+	    \multicolumn{3}{| c |}{\textbf{Components in the prototype environment}} \\ \hline
+		\textbf{Component} & \textbf{Version} & \textbf{Purpose} \\ \hline
+		Jetty & 8.1.7.v20120910 & Web server \& Java servlet container \\ \hline
+		Nginx & 1.1.19 & Load balancer \& HTTP server \\ \hline
+	    Chef & 10.18.2 & Infrastructure automation tool \\ \hline
+	    Gatling & 1.4.1 & Load testing tool \\ \hline
+	    Ganglia & 3.4.0 & Monitoring system \\ \hline
+		Ganglia Web & 3.5.2 & Monitoring dashboard user interface \\ \hline
+		Codahale Metrics & 3.0.0-SNAPSHOT & Java library for collecting 
+		metrics from application server and application \\ \hline
+	    Ubuntu Linux & 12.04.1 LTS & Operating System on all nodes. Baseline Amazon machine image \texttt{ami-3d4ff254}. \\ \hline
+	    \end{tabular}
+}
+	    \caption{Server applications and tools used in the prototype.}
+	    \label{table:QoEFactors}
 
+	\end{table}
 
-
-\missingfigure{make a table of server apps / support apps and their versions.}
-
+\end{center}
 
 \section{Prototype test results}
 \label{relatedwork}
