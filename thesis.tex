@@ -1049,8 +1049,8 @@ for the virtual machine. These phases are pure waiting time in terms of the
 elasticity controller and the application. Billing typically starts at the start
 of this phase, so cost of inefficiency is born by the cloud user \todo{cite
 billing start at instance start command receipt, not completion}. Similarly,
-billing stops at the completion of stopping/terminating the VM, so again the
-user can only hope for fast completion.
+billing stops at the completion of the VM stop or termination process, so again
+the user can only hope for fast completion.
 
 Finally the ultimate bounds for QoE are set by \textit{utility preferences}. The
 preferences are modeled above as functions of metric data at a point in time.
@@ -1070,7 +1070,7 @@ if applied to its full extent.
 
 \subsection{Elasticity controller architecture}
 
-Technology independent explanation of elasticity controller architecture goes here.
+Technology independent explanation of elasticity controller architecture goes here.\todo{Is tech independent controller architecture really still todo or can it be skipped?}
 
 %controller related architecture items
 \begin{itemize}
@@ -1246,14 +1246,18 @@ random integers and returns the last one as HTTP response header. The service is
 clearly useless for any real purpose and is simply written to represent a CPU
 bound highly parallelizable computation task. The application does not store
 user state, which makes it easy to spread the service requests among any number
-of servers running the same code.
+of servers running the same code. The deployment includes a load balancer node
+as a single point of entry. Requests first arrive at the load balancer which
+allocates them to any number of configured application servers using a simple
+round robin algorithm.
 
-The application is deployed on the Amazon EC2 IaaS platform. The minimal
-configuration consists of one application server (jetty 8.1.7.v20120910) and a
-load balancer (nginx version x.x.x\todo{check nginx version}). The requests
-first arrive at the load balancer which allocates them to any number of
-configured application servers using a simple round robin algorithm. Scaling out
-for this application means
+The application is deployed on the Amazon Elastic Compute Cloud (EC2) IaaS
+platform. All server nodes run the Ubuntu Linux operating system. The minimal
+configuration consists of one application server node (jetty) and a load
+balancer node (nginx). Further details of system components and their versions
+is given in table \ref{table:componentVersions}.
+
+Scaling out for this application means  
 
 \begin{itemize}
 	\item{provisioning more application server instances,}
@@ -1263,26 +1267,59 @@ for this application means
 	provisioned instances.}
 \end{itemize}
 
-Figure \ref{fig:deploymentdiagram} shows the deployment diagram for the
+Figure \ref{fig:deploymentDiagram} shows the deployment diagram for the
 application along with elasticity controller components which will be discussed
 in further chapters.
 
-\missingfigure{deployment diagram}
+\begin{figure}[h]
+	%\centering
+	%\setlength\fboxsep{0pt}
+	%\setlength\fboxrule{0.25pt}	
+	%\centerline{
+	%\hspace*{-3cm}
+	\rotatebox{90}{\includegraphics[width=15cm]{images/deploymentDiagram}
+	}
+	\caption{Prototype deployment diagram.}
+	\label{fig:deploymentDiagram}
+\end{figure}
 
-\todo{this stuff about prototype elasticity preferences may be better to put in the results chapter?}
 The elasticity requirements for this application are related to response time
 and cost. These requirements conflict as reducing response time by adding more
 server instances will increase the cost.
 
 The response time requirement states that the application must respond to
-requests within $responseTime_{min} = 0.8$ to $responseTime_{max} = 1.5$
+requests within $r_{min} = 0.8$ to $r_{max} = 1.5$
 seconds. The response time preference decreases linearly from the maximum value
-1.0 down to zero as the response time grows from 0.8 to 1.5 seconds. \todo{math
-notation for preference and utility functions in practice?} The response time is
-measured at the application server using an instrumented\footnote{The monitoring
-instrumentation is done using the Codahale Metrics library version
-3.0.0-SNAPSHOT available at \url{https://github.com/codahale/metrics}} wrapper
-for the standard Jetty request handler. Network latencies are therefore
+1.0 down to zero as the response time grows from 0.8 to 1.5 seconds. The metrics used to calculate this preference are response time $r$ and response
+time slope $k$. The response time preference function is defined as  
+
+\begin{equation}
+P_{r}(r, k) = \begin{cases}
+    1, & \text{if $r < r_{min}$}.\\
+    0, & \text{if $r > r_{max}$ or $k > k_{spike}$}.\\
+    \frac{r - r_{min}}
+    	 {r_{max} - r_{min}}, & \text{otherwise}.
+  \end{cases}
+  \label{eq:responseTimePreference}
+\end{equation}
+
+where $k_{spike}$ is a threshold identifying a \textit{spike}, a sudden increase
+in requests sent to the system. The spike threshold is defined as $200
+\frac{ms}{min}$, i.e. the system is in a spike situation if response time has
+increased increased 200 milliseconds per minute. The metric resolution here is 5
+minutes.
+
+The slope is defined as 
+
+\begin{equation}
+	k = \frac{r - r_{5}}{5}
+  \label{eq:responseTimeSlope}
+\end{equation}
+
+where $r_{5}$ is the response time 5 minutes prior to the current time.
+
+The response time is measured at the application server using an instrumented
+wrapper for the standard Jetty request handler. Network latencies are therefore
 unaccounted for.
 
 The cost requirement is specified based on the cost of each service request. As
@@ -1290,25 +1327,39 @@ a simplification, each VM instance is considered to cost 1 currency units per
 hour. A maximum cost of 20 currency units is given as the upper bound to limit
 scaling out indefinitely. The cost preference function is defined as a
 normalized linear mapping in the range $[0\dots1]$ from a minimum cost per
-request $costPerRequest_{min}$ to a maximum cost per request
-$costPerRequest_{max}$ of 1.0. $costPerRequest_{min}$ is further defined as the
-cost per VM instance $costPerVM$ divided by the maximum measured average server
-throughput (requests per second) $okThroughputPerVM$ when the average response
-time is less than $responseTime_{min}$, i.e.
+request $c_{min}$ to a maximum cost per request
+$c_{max}$ of 1.0, i.e. 
 
-\[
-costPerRequest_{min} = 
-\frac{costPerVM}{okThroughputPerVM} 
-\]
 
-where $responseTime < responseTime_{min}$.
+\begin{equation}
+P_{c}(e, v, k, q, t_{vm}) = \begin{cases}
+    1, & \text{if $c < c_{min}$ or $v \leq 1$ or $k > 50$ or $q > 0$}.\\
+    0, & \text{if $c > c_{max}$ and $v > 1$}.\\
+    \frac{c - c_{min}}
+    	 {c_{max} - c_{min}}, & \text{otherwise}.
+  \end{cases}
+  \label{eq:costPreference}
+\end{equation}
+
+where $e$, $v$, $k$, $q$ and $t_{vm}$ denote current arrival rate of requests,
+amount of application server VM instances currently in use, response time slope,
+average queue length at the application servers and maximum average
+server throughput (requests per second per VM instance) measured when the average
+response time is less than $r_{min}$, respectively. $c_{min}$ is further defined
+as the cost per VM instance $c_{vm}$ divided by $t_{vm}$ , i.e.
+
+\begin{equation}
+	c_{min} = 
+	\frac{c_{vm}}{t_{vm}} 
+	\label{eq:costMin}
+\end{equation}
+
+where $t_{vm}$ is measured only when $r < r_{min}$.\todo{can the throughput metric be simplified, the response time rule does not make sense?} 
 
 The application running on \textit{m1.small} instances on Amazon EC2 will
 typically handle approximately 3 requests per second with a response time less
-than the $responseTime_{min}$ of 0.8 seconds. This makes $costPerRequest_{min}$
+than the $r_{min}$ of 0.8 seconds. This makes $c_{min}$
 roughly equal to 0.3 currency units.
-
-
 
 \subsection{Elasticity controller}
 
@@ -1356,25 +1407,44 @@ S(X) = \sum\limits_{i=1}^j w_{i}^{in}P_{i}^{in}(X) +
 \label{eq:scalingfunction}
 \end{equation}
 
-The weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two
-groups so that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k
-w_{i}^{out} = 1$.
-
-\todo{write here about normal growth scaling plan}
+where $P_{i}^{in}$ denotes a preference which requires scaling in and
+$P_{i}^{out}$ denotes a preference which requires scaling out to improve. The
+weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two groups so
+that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k w_{i}^{out} =
+1$. 
 
 In addition to the scaling function, the elasticity controller detects trends in
 response time by keeping track of the request response time in a 5-minute moving
 window. The slope $k_{r}$ of response time is calculated based on the delta of
-the metric value 5 minutes ago and currently. If $k_{r} > 200 \frac{ms}{min}$,
-the trend is considered a \textit{spike}, a sudden lage increase in activity.
+the metric value 5 minutes ago and currently. If response time has grown more
+than 200 ms per minute in the last 5 minutes, i.e. $k_{r} > 200 \frac{ms}{min}$,
+the trend is considered a \textit{spike}, a sudden large increase in activity.
 
-\todo{spike scaling plan description}
+With this information, the elasticity controller creates a scaling plan. Scaling
+is done in the direction indicated by the scaling function $S(X)$ and the amount
+of server instances to add or remove depends on the slope. With gradual growth,
+the amount of application server nodes is increased by half. If the response
+time slope indicates a spike is underway, the server instance count is
+multiplied by three.
 
-With this definition of $S(X)$, it is possible that positive scale out
-preferences and negative scale in preferences cancel each other out. For this
-reason, a
+For scaling in, the amount is decided with the use of the cost preference
+function. The cost preference is calculated with decreasing instance count until
+it reaches the maximum preference value. Any instances above the count which
+yields maximum cost preference are terminated.
 
-..$S(X)$ is derived from $U(X)$ by determining the direction of scaling needed to 
+With the above definition of the scaling function $S(X)$, it is possible that
+positive scale out preferences and negative scale in preferences cancel each
+other out or interfere with each other at a time when the metrics clearly indicate scaling is needed in a specific direction. For this reason, the cost preference is considered to be at its maximum in the following situations:
+
+\begin{itemize}
+	\item{If the slope is larger than $50 \frac{ms}{min}$. This indicates an increasing load trend.}
+	\item{If there are requests queued up at the application server(s), i.e. all available processing threads are processing a request and more requests are waiting to be processed.}
+	\item{If there is only one application server.}
+\end{itemize}
+
+Similarly the response time function has one special case when it is set to minimum preference. This is when the response time slope indicates a spike. The preference function then indicates the need to scale out regardless of the current response time value.
+
+...$S(X)$ is derived from $U(X)$ by determining the direction of scaling needed to 
 improve each preference function's value. The values of preference functions 
 which require scaling in to improve are negated. Otherwise the function is equal 
 to $U(X)$.\todo{What to do to get -1 value if the WEIGHT of cost is less than 
@@ -1414,10 +1484,6 @@ however, only a single cloud provider is used.
 
 The environment has been set up using the Chef infrastructure automation tool.
 
-
-
-\begin{center}
-
 	\begin{table}[h]
 \resizebox{\textwidth}{!}{
 	    \begin{tabular}{| l | r | p{6cm} |}
@@ -1436,11 +1502,9 @@ The environment has been set up using the Chef infrastructure automation tool.
 	    \end{tabular}
 }
 	    \caption{Server applications and tools used in the prototype.}
-	    \label{table:QoEFactors}
+	    \label{table:componentVersions}
 
 	\end{table}
-
-\end{center}
 
 \section{Prototype test results}
 \label{relatedwork}
