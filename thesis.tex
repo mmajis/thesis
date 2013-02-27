@@ -37,6 +37,7 @@
 \usepackage{multirow} 
 \usepackage{array}
 \usepackage{setspace}
+\usepackage{morefloats}
 
 
 % Automatically set the PDF metadata fields
@@ -879,17 +880,18 @@ function}
 U(X) = \sum\limits_{i=1}^k w_{i}P_{i}(X) \label{eq:utilityfunction}
 \end{equation}
 
-with a normalized range $U(X) \in [0, 1]$, where a value of 0 denotes the worst
-possible utility and 1 denotes that the system fully satisfies its combined
-requirements. $X$ is a set of $j$ parameters $\{x_{1}, \dots, x_{j}\}$ which are
-needed to calculate the utility. Metric values and other knowledge of the system
-state are typical parameters. The utility function is a weighted sum of $k$
-\emph{preference functions} $P_{i}(X)$ with $1 \le i \le k$. Each elasticity
-related requirement is defined as a preference function $P_{i}$ with a
-normalized range $P_{i}(X) \in [0, 1]$, where a value of 0 denotes the worst
-possible preference for this requirement and 1 denotes that the requirement has
-been optimally fulfilled. The weights $w_{i}$ represent the relative importance
-of each preference function to overall utility, with $\sum_{i=1}^k w_{i} = 1$.
+with a normalized range $U(X) \in [0, 1]$ in the domain of real numbers, where a
+value of 0 denotes the worst possible utility and 1 denotes that the system
+fully satisfies its combined requirements. $X$ is a set of $j$ parameters
+$\{x_{1}, \dots, x_{j}\}$ which are needed to calculate the utility. Metric
+values and other knowledge of the system state are typical parameters. The
+utility function is a weighted sum of $k$ \emph{preference functions} $P_{i}(X)$
+with $1 \le i \le k$. Each elasticity related requirement is defined as a
+preference function $P_{i}$ with a normalized range $P_{i}(X) \in [0, 1]$, where
+a value of 0 denotes the worst possible preference for this requirement and 1
+denotes that the requirement has been optimally fulfilled. The weights $w_{i}$
+represent the relative importance of each preference function to overall
+utility, with $\sum_{i=1}^k w_{i} = 1$.
 
 
 \subsection{Quality of elasticity} The utility function (\ref{eq:utilityfunction}),
@@ -905,11 +907,13 @@ out and in as a response to changes in its environment.
 
 The \emph{quality of elasticity} (QoE) for a system over time can be quantified
 as the integral of the utility function from some moment of time $a$ to time
-$b$:
+$b$ divided by the duration of the measurement $b - a$:
 
 \begin{equation}
-QoE = \int\limits_a^b U(X)~dx \label{qoefunction}
+QoE = \frac{\int\limits_a^b U(X)~dx}{b-a} \label{eq:qoefunction}
 \end{equation}
+
+The range for $QoE$ is the same as that of the utility function, i.e. $QoE \in [0, 1]$ in the domain of real numbers.
 
 For real systems the utility function is represented by monitored metric values
 gathered over time rather than a mathematical function. In this case the
@@ -921,21 +925,22 @@ point to the next is linear and the method gives exact results in such a case
 The numerical trapezoid method version of the $QoE$ formula is
 
 \begin{equation}
-\int\limits_a^b U(X)~dx \approx 
-\frac{b-a}{2N}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k})) = 
-\frac{h}{2}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k})) 
-\label{qoefunctionnumerical}
+\frac{\int\limits_a^b U(X)~dx}{b-a} \approx 
+\frac{\frac{b-a}{2N}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k}))}{b-a} = 
+\frac{\frac{h}{2}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k}))}{b-a} 
+\label{eq:qoefunctionnumerical}
 \end{equation}
 
 where $N$ is the amount of evenly spaced data point intervals and $X_{i}$ with
-$i \in [0, \dots, N]$ is the set of monitored metric values for utility data
+$i \in [0, N]$ is the set of monitored metric values for utility data
 point $i$. The spacing of data points is denoted by $h = \frac{b-a}{N}$ which
 solves to $1$ when the data is evenly spaced and available for each interval.
 Finally with all simplifications applied, quality of elasticity is calculated
 with the following formula:
 
 \begin{equation}
-QoE = \frac{1}{2}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k})) \label{qoefunctionnumericalfinal}
+QoE = \frac{\frac{1}{2}\sum\limits_{k=1}^N (U(X_{k-1}) + U(X_{k}))}{b-a} 
+\label{eq:qoefunctionnumericalfinal}
 \end{equation}
 
 QoE is a measure of the quality of the elasticity controller's decision making
@@ -943,7 +948,7 @@ and execution capability in the specific environment it is in. The behavior of
 the measured application and the strictness of elasticity related requirements
 given for the application influence QoE. The range of possible runtime QoE
 values has to be approximated or tested empirically by excercising the system in
-order to use QoE as a tool to reason about elastic performance. Table
+order to use QoE as a tool to reason about elastic performance. This is because given a Table
 \ref{table:QoEFactors} lists notable QoE factors and attributes them to system
 components based on the components' infuence on the factor. The factors are both
 technical and business related in nature and are discussed in the remainder of
@@ -1411,7 +1416,7 @@ where $P_{i}^{in}$ denotes a preference which requires scaling in and
 $P_{i}^{out}$ denotes a preference which requires scaling out to improve. The
 weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two groups so
 that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k w_{i}^{out} =
-1$. 
+1$. In practice the prototype used here has one preference ($P_{r}$) for scaling out and one ($P_{c}$) for scaling in, so both their weights are $1.0$.
 
 In addition to the scaling function, the elasticity controller detects trends in
 response time by keeping track of the request response time in a 5-minute moving
@@ -1444,18 +1449,6 @@ other out or interfere with each other at a time when the metrics clearly indica
 
 Similarly the response time function has one special case when it is set to minimum preference. This is when the response time slope indicates a spike. The preference function then indicates the need to scale out regardless of the current response time value.
 
-...$S(X)$ is derived from $U(X)$ by determining the direction of scaling needed to 
-improve each preference function's value. The values of preference functions 
-which require scaling in to improve are negated. Otherwise the function is equal 
-to $U(X)$.\todo{What to do to get -1 value if the WEIGHT of cost is less than 
-one? Normalize?} 
-
-...The value of the utility function (\ref{eq:utilityfunction} is calculated in 
-the analysis phase. If the value is below a threshold of 
-
-...The concept of utility is expanded to indicate the direction of scaling needed 
-to arrive at optimal utility by 
-
 The controller application delegates \textit{execution} of the plan to an
 infrastructure automation tool called Chef. Chef is a cloud age tool which
 enables an \textit{infrastructure as code} approach to IT operations. All
@@ -1476,16 +1469,22 @@ server is read from Chef every time a new node is configured (and periodically
 during the node's lifetime). Any change in system configuration due to scaling
 operations gets updated to live nodes in this way.
 
-
-on a dedicated node external to
-the cloud environment as a nod to its cross cloud ideology. In this case,
-however, only a single cloud provider is used.
-
-
-The environment has been set up using the Chef infrastructure automation tool.
+Although the monitoring system reports new values every 15 seconds, the moving
+average values for metrics take time to reflect a change in system performance.
+Response time, for example, is measured as a biased histogram of 1028 data
+points. The histogram sample uses a forward-decaying algorithm which favors data
+from the past 5 minutes~\cite{forwardDecayHistogram}\cite{codahaleHistogram}.
+This metric type is good at evening out jitter in the values but takes time to
+react to significant changes as well. To allow time for the metrics to stabilize
+after a provisioning operation, the system has a 3-minute quiet period after
+each provisioning completes. No new provisioning operations are started during
+this time. This gives time for the metrics to stabilize for a new amount of
+virtual machines and e.g. data to start actually arriving from newly provisioned
+VMs, but also means the system is not responsive to utility changes during this
+time. Responsiveness is further hindered by the time it takes to provision instances, as the total quiet period consists of first waiting for new instances and then waiting for metrics to accommodate for them.
 
 	\begin{table}[h]
-\resizebox{\textwidth}{!}{
+		\resizebox{\textwidth}{!}{
 	    \begin{tabular}{| l | r | p{6cm} |}
 	    \hline
 	    \multicolumn{3}{| c |}{\textbf{Components in the prototype environment}} \\ \hline
@@ -1498,26 +1497,289 @@ The environment has been set up using the Chef infrastructure automation tool.
 		Ganglia Web & 3.5.2 & Monitoring dashboard user interface \\ \hline
 		Codahale Metrics & 3.0.0-SNAPSHOT & Java library for collecting 
 		metrics from application server and application \\ \hline
-	    Ubuntu Linux & 12.04.1 LTS & Operating System on all nodes. Baseline Amazon machine image \texttt{ami-3d4ff254}. \\ \hline
+	    Ubuntu Linux & 12.04.1 LTS & Operating System on all nodes. \\ \hline
 	    \end{tabular}
-}
+		}
 	    \caption{Server applications and tools used in the prototype.}
 	    \label{table:componentVersions}
-
 	\end{table}
 
-\section{Prototype test results}
-\label{relatedwork}
+\section{Test results}
+\label{sec:results}
 
 This chapter discusses the performance of the elasticity controller prototype
 and the test application in terms of utility preferences and the overall quality
-of elasticity for the setup.
+of elasticity for application deployment described in chapter
+\ref{sec:elasticScalingPrototypeSetup}. Two different testing scenarios are
+presented along with results of how the controller responded to the request load
+generated by the scenarios. Quality of elasticity is evaluated as a conclusion to the chapter.
+
+\subsection{Test scenarios} \label{sec:testScenarios} 
+
+The elasticity controller was tested under two scenarios. Scenario 1 subjected
+the system to a gradually growing rate of requests while scenario 2 generated a
+sudden spike of requests. The scenarios were implemented using the Gatling load
+testing tool \cite{gatling}.
+
+Gatling simulates users making requests to the application. Each simulated user
+sends equal requests, i.e. only one request type is used. The request handler
+calculates a million random integers and returns the last one. After receiving a
+response, the user waits for a random amount of time between 500 and 800
+milliseconds before sending another request. This is repeated for one hour. The
+actual time depends on response times and ramp down periods.
+
+The amount of users varies throughout the scenarios. The gradual growth scenario
+starts with six users and adds two more every 10 minutes. All users finish after
+one hour. The scenario steps with their timings for scenario 1 are:
+
+\begin{itemize}
+	\item{\textbf{00:00} - 6 users ramp up in 30 seconds.}
+	\item{\textbf{00:10} - 2 users ramp up in 1 second.}
+	\item{\textbf{00:20} - 2 users ramp up in 1 second.}
+	\item{\textbf{00:30} - 2 users ramp up in 1 second.}
+	\item{\textbf{00:40} - 2 users ramp up in 1 second.}
+	\item{\textbf{00:50} - 2 users ramp up in 1 second.}
+	\item{\textbf{01:00} - 10 users ramp down in 1 second. The first 6 users ramp 
+			down in 30 seconds.}	
+	\item{\textbf{01:00:30} - Finished ramping down users.}
+	\label{gatlingStepsScenario1}
+\end{itemize}
+
+The spike scenario starts with three users for five minutes, then gradually adds
+six more users during a period of ten minutes and finally starts the spike of 30
+users at 00:25. The spike nearly triples the user amount during one minute. The
+spike lasts for 20 minutes until 00:45. At 00:55 The six user wave starts
+ramping down over the next 10 minutes, so that at 01:00, when the first 3 users
+ramp down, 3 users from the six user wave are still ramping down. Finally all
+users are ramped down at 01:05. The steps with their timings for scenario 2 are:
+
+\begin{itemize}
+	\item{\textbf{00:00} - 3 users ramp up in 5 seconds.}
+	\item{\textbf{00:05} - 6 users ramp up in 600 seconds.}
+	\item{\textbf{00:15} - 6 users fully ramped up.}
+	\item{\textbf{00:25} - 30 users ramp up in 60 seconds (spike).}
+	\item{\textbf{00:45} - 30 users ramp down in 60 seconds (spike ends).}
+	\item{\textbf{00:55} - 6 users ramp down in 600 seconds.}
+	\item{\textbf{01:00} - 3 users ramp down in 5 seconds.}
+	\item{\textbf{01:05} - Finished ramping down users.}	
+	\label{gatlingStepsScenario2}
+\end{itemize}
+
+\subsection{Results: Scenario 1}
+\label{sec:resultsScenario1}
+
+Scenario 1 exhibiting gradual growth in request rate was handled quite well by
+the elasticity controller. Starting off with 1 application server instance and 6
+users, a reference throughput ($t_{vm}$ used in cost preference calculation)
+rate of $3.4$ requests per second was established. Utility (fig.
+\ref{fig:utilityScenario1} on page \pageref{fig:utilityScenario1}) stayed above
+the scaling trigger value of $0.7$ until the first two users were added at
+00:10. The controller took 6 minutes to react to the increased amount of users.
+At 00:16, utility fell below $0.7$ due to an increase in response time (fig.
+\ref{fig:responseTimeScenario1} on page \pageref{fig:responseTimeScenario1}) to
+$1.2 s$ and hence a drop in the corresponding preference function value (fig.
+\ref{fig:responseTimePreferenceScenario1} on page
+\pageref{fig:responseTimePreferenceScenario1}) to $0.4$. The MAPE-K planning
+phase was triggered and concluded with a decision to provision one new VM
+instance as scaling utility (fig. \ref{fig:scalingUtilityScenario1} on page
+\pageref{fig:scalingUtilityScenario1}) was positive at $0.6$ at the time and
+response time slope (fig. \ref{fig:responseTimeSlopeScenario1} on page
+\pageref{fig:responseTimeSlopeScenario1}) was under $200$ indicating no spike
+was occurring.
+
+Two aplication server instances were enough to satisfy utility for most of the
+test duration. Utility dropped below $0.7$ briefly at 00:21 during the
+controller's post provisioning quiet period. This utility fluctuation is caused
+by a drop in both response time and cost preference values (fig.
+\ref{fig:costPreferenceScenario1} on page
+\pageref{fig:costPreferenceScenario1}). The metrics for request rate and
+response time fluctuated down and up at this time due to the system adjusting to
+the new virtual machine. Averaged metric values are affected immediately when a
+new instance shows up in the monitoring system (averaged system wide values are
+calculated by dividing a sum of each node's metric value by the number of
+nodes). It takes 2-3 minutes after this to start receiving actual correct data
+from the new node and for 1-minute and 5-minute averaged metrics to react. The
+quiet period accommodates this fluctuation and prevented a hasty further scaling
+decision here.
+
+The next significant change in utility was at 00:33. Request rate (fig.
+\ref{fig:requestRateScenario1} on page \pageref{fig:requestRateScenario1}) drops
+to $2$ requests/s for no apparent reason but then recovers to $3$ at 00:37.
+Response time reacts upward to nearly $1.2 s$ a bit later at 00:36 returning to
+$0.8 s$ at 00:40. This appears likely to be a slow down in the infrastructure as
+the request load did not change at the time. Response time reacts slower than
+request rate because it is calculated using a 5-minute median as opposed to a
+1-minute mean for the request rate.
+
+
+
+\subsection{Results: Scenario 2}
+
+Text here.
+
+
+
+
+\subsection{Notes on quality of elasticity}
+
+Text here.
 
 \section{Conclusion}
 \label{conclusion}
 
 Summary and conclusion.
 
+
+\clearpage
+\appendix
+
+\section{Figures for test scenario 1}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/utilitygraph-test21}
+	\caption{Utility during test scenario 1}
+	\label{fig:utilityScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/scalingutilitygraph-test21}
+	\caption{Scaling utility during test scenario 1}
+	\label{fig:scalingUtilityScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/preferencesgraph-test21}
+	\caption{Combined preference function and utility values during test scenario 1}
+	\label{fig:preferencesScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/responsetimepreferencegraph-test21}
+	\caption{Response time preference function values during test scenario 1}
+	\label{fig:responseTimePreferenceScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/costpreferencegraph-test21}
+	\caption{Cost preference function values during test scenario 1}
+	\label{fig:costPreferenceScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/requestrategraph-test21}
+	\caption{Request rate during test scenario 1}
+	\label{fig:requestRateScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/responsetimeslopegraph-test21}
+	\caption{Response time slope during test scenario 1}
+	\label{fig:responseTimeSlopeScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/vmcountgraph-test21}
+	\caption{Scaling utility during test scenario 1}
+	\label{fig:vmCountScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/costperrequestpersecondgraph-test21}
+	\caption{Cost per request per second during test scenario 1}
+	\label{fig:costScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/responsetimegraph-test21}
+	\caption{Response time during test scenario 1}
+	\label{fig:responseTimeScenario1}
+\end{figure}
+
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/queuesizegraph-test21}
+	\caption{Application server request queue size during test scenario 1}
+	\label{fig:queueScenario1}
+\end{figure}
+
+\clearpage
+
+\section{Figures for test scenario 2}
+
+\begin{figure}[htbp]
+	%\centering
+	%\setlength\fboxsep{0pt}
+	%\setlength\fboxrule{0.25pt}	
+	%\centerline{
+	%\hspace*{-3cm}
+	%\rotatebox{90}{
+	\includegraphics[width=\textwidth]{images/utilitygraph-test23}
+	%}
+	\caption{Utility during test scenario 2}
+	\label{fig:utilityScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/scalingutilitygraph-test23}
+	\caption{Scaling utility during test scenario 2}
+	\label{fig:scalingUtilityScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/preferencesgraph-test23}
+	\caption{Combined preference function and utility values during test scenario 2}
+	\label{fig:preferencesScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/responsetimepreferencegraph-test23}
+	\caption{Response time preference function values during test scenario 2}
+	\label{fig:responseTimePreferenceScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/costpreferencegraph-test23}
+	\caption{Cost preference function values during test scenario 2}
+	\label{fig:costPreferenceScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/requestrategraph-test23}
+	\caption{Request rate during test scenario 2}
+	\label{fig:requestRateScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/responsetimeslopegraph-test23}
+	\caption{Response time slope during test scenario 2}
+	\label{fig:responseTimeSlopeScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/vmcountgraph-test23}
+	\caption{Scaling utility during test scenario 2}
+	\label{fig:vmCountScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/costperrequestpersecondgraph-test23}
+	\caption{Cost per request per second during test scenario 2}
+	\label{fig:costScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/responsetimegraph-test23}
+	\caption{Response time during test scenario 2}
+	\label{fig:responseTimeScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/queuesizegraph-test23}
+	\caption{Application server request queue size during test scenario 2}
+	\label{fig:queueScenario2}
+\end{figure}
+
+\clearpage
 
 % --- Back matter ---
 %
