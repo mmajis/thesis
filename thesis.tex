@@ -948,8 +948,19 @@ and execution capability in the specific environment it is in. The behavior of
 the measured application and the strictness of elasticity related requirements
 given for the application influence QoE. The range of possible runtime QoE
 values has to be approximated or tested empirically by excercising the system in
-order to use QoE as a tool to reason about elastic performance. This is because given a Table
-\ref{table:QoEFactors} lists notable QoE factors and attributes them to system
+order to use QoE as a tool to reason about elastic performance. A threshold
+$QoE$ value can be chosen so that whenever below that threshold, the elasticity
+controller will work to increase the system's utility. Normalizing the $QoE$
+value between this threshold and the maximum 1.0 then gives a ``score'' for the
+system's elasticity:
+
+\begin{equation}
+	QoEScore = \frac{QoE - QoE_{min}}{QoE_{max} - QoE_{min}} 
+	\label{eq:qoeScore}
+\end{equation}
+
+Table
+\ref{table:QoEFactors} lists notable factors of QoE and attributes them to system
 components based on the components' infuence on the factor. The factors are both
 technical and business related in nature and are discussed in the remainder of
 this chapter.
@@ -1073,25 +1084,25 @@ stakeholders. The ATAM method finds quality attributes that are pivotal to the
 success of a system to its stakeholders, but appears to require a lot of effort
 if applied to its full extent.
 
-\subsection{Elasticity controller architecture}
+% \subsection{Elasticity controller architecture}
 
-Technology independent explanation of elasticity controller architecture goes here.\todo{Is tech independent controller architecture really still todo or can it be skipped?}
+% Technology independent explanation of elasticity controller architecture goes here.\todo{Is tech independent controller architecture really still todo or can it be skipped?}
 
-%controller related architecture items
-\begin{itemize}
-\item elasticity enables design for failure
-\item The role of the controller component
-\item layers in cloud reference model (Tung2011) SYMPOSIUM PAPER, maybe Kirschnick2010 instead? Also CEM11, Kranas2012
-\item Interfaces
-	\begin{itemize}
-	\item Application insight (sensors)
-	\item Cloud infrastructure (actuators)
-	\item Management information systems (reporting)
-	\end{itemize}
-\item Scaling algorithms/rules based on metrics \& quality attributes
-\item elastic service definition language (Chapman)
-\item Claudia tool
-\end{itemize}
+% %controller related architecture items
+% \begin{itemize}
+% \item elasticity enables design for failure
+% \item The role of the controller component
+% \item layers in cloud reference model (Tung2011) SYMPOSIUM PAPER, maybe Kirschnick2010 instead? Also CEM11, Kranas2012
+% \item Interfaces
+% 	\begin{itemize}
+% 	\item Application insight (sensors)
+% 	\item Cloud infrastructure (actuators)
+% 	\item Management information systems (reporting)
+% 	\end{itemize}
+% \item Scaling algorithms/rules based on metrics \& quality attributes
+% \item elastic service definition language (Chapman)
+% \item Claudia tool
+% \end{itemize}
 
 \subsection{Elastic application architecture}
 
@@ -1571,7 +1582,9 @@ users are ramped down at 01:05. The steps with their timings for scenario 2 are:
 Scenario 1 exhibiting gradual growth in request rate was handled quite well by
 the elasticity controller. Starting off with 1 application server instance and 6
 users, a reference throughput ($t_{vm}$ used in cost preference calculation)
-rate of $3.4$ requests per second was established. Utility (fig.
+rate of $3.4$ requests per second per server was established at 00:07 as show in
+figure \ref{fig:referenceThroughputScenario1} on page
+\pageref{fig:referenceThroughputScenario1}. Utility (fig.
 \ref{fig:utilityScenario1} on page \pageref{fig:utilityScenario1}) stayed above
 the scaling trigger value of $0.7$ until the first two users were added at
 00:10. The controller took 6 minutes to react to the increased amount of users.
@@ -1611,18 +1624,174 @@ the request load did not change at the time. Response time reacts slower than
 request rate because it is calculated using a 5-minute median as opposed to a
 1-minute mean for the request rate.
 
+At 00:54, utility fell below $0.7$ again. Response time had increased earlier
+and starting from 00:50 request rate fell down to $4$ from $6$. This was likely
+another infrastructure performance fluctuation as a comparable request rate
+change did not happen after 00:40 when 2 more users started making requests
+similar to 00:50. On the other hand, the effect of those additional users shows
+clearly in response time as it increases to 1 second after the user increase at
+00:40. With the response time increase followed by the request rate drop, the
+elasticity controller made a further scale out decision to add 1 VM instance.
 
+The added VM arrived late for this scenario. Provisioning started at 00:54 and
+continued until 00:59. The metrics show the VM coming properly online just
+before the one hour mark at which the Gatling load script terminates. The
+completion of VM provisioning is seen in the response time preference value as
+it increases quickly at the same time as the VM count metric (fig.
+\ref{fig:vmCountScenario1} on page \pageref{fig:vmCountScenario1}) increases.
+Then response time preference decreases as the new VM starts reporting response
+times and takes time to get up to full speed. The scenario ends at 01:00 and the
+1 minute average request rate metric reacts a minute later to drop utility below
+$0.7$ again. This triggers another scaling decision whereby 2 virtual machines
+are terminated, returning the system to its original configuration of 1
+application server instance.
+
+The overall $QoE$ value for this scenario is $0.86$. The system performed
+relatively well in terms of quality of elasticity. Normalizing $QoE$ between a
+minimum of 0.7 and maximum of 1.0 (eq. \ref{eq:qoeScore} on page
+\pageref{eq:qoeScore})yields a ``score'' of 53\% to the system given this
+elasticity scenario.
 
 \subsection{Results: Scenario 2}
 
-Text here.
+The second scenario tests the system's behavior under a load which spikes, i.e.
+suddenly increases from 9 users to 39 users. Reference throughput used for cost
+calculation goes up to $3.6$ this time at 00:12 (fig.
+\ref{fig:referenceThroughputScenario2} on page
+\pageref{fig:referenceThroughputScenario2}). This difference has to be
+attributed to the cloud infrastructure as the virtual machine instances are
+different and hence also the placement on physical hardware at Amazon's data
+center is most likely different. The maximum reference throughput was reached
+later than in scenario 1 due to the difference in user amounts. Scenario 2 has 8
+users making requests at 00:12 whereas scenario 1 reached its maximum throughput
+with 6 users. VM instance performance is clearly different between the scenario
+executions.
 
+Utility (fig. \ref{fig:utilityScenario2} on page \pageref{fig:utilityScenario2})
+was at maximum until the user amount reached 8. Response time had slowly
+increased from 00:08 with the gradual increase of users and lead to utility
+dropping below the $0.7$ threshold at 00:16. Provisioning of one VM instance was
+started and the VM became operational at 00:20 returning utility above the
+threshold. The metrics jittered a lot during the quiet period again as they
+adjusted to the new instance. After stabilizing, utility increased back to
+maximum at 00:26, just in time to receive the spike.
 
+The spike started at 00:25 with 30 additional users ramping up over the next 60
+seconds. The system was clearly not ready to handle this kind of load as the
+application server request queues started filling up (fig.
+\ref{fig:queueScenario2} on page \pageref{fig:queueScenario2}) which did not
+happen at all in scenario 1 (fig. \ref{fig:queueScenario1} on page
+\pageref{fig:queueScenario1}). At 00:28 the response time preference (fig.
+\ref{fig:responseTimePreferenceScenario2} on page
+\pageref{fig:responseTimePreferenceScenario2}) quickly fell from 1.0 to 0.0.
+Response time was increasing but the slope metric was close to 0 as response
+time now and five minutes prior was nearly at the same level. Utility decreased
+below the threshold, but elasticity controller failed to detect the spike
+because of the low slope value. Due to this, provisioning of only one additional
+VM instance was started at this time.
 
+The spike continued while the single VM was being provisioned. Its introduction
+to the load balancing array understandably did nothing to make this better and
+utility was flat at 0.5. Utility did not decrease further because the cost
+preference function was at maximum, i.e. the request rate (fig.
+\ref{fig:requestRateScenario1} on page \pageref{fig:requestRateScenario1}) was
+high enough to keep cost per request low. At 00:34, six minutes after the
+misfired single VM provisioning operation, the quiet period ended and the
+elasticity controller was able to add more VM instances. This time 9 more were
+added, as the controller is configured to triple the amount of VMs if it detects
+a spike.
+
+One of the 9 VMs failed in the contextualization phase and at 00:40, 8 new
+application server instances started receiving requests. During the quiet period
+and even after it until 00:44, utility was below the 0.7 threshold, but no
+scaling operations were executed. The scaling utility metric (fig.
+\ref{fig:scalingUtilityScenario1} on page
+\pageref{fig:scalingUtilityScenario1}), which indicates whether to add or remove
+instances, was negative but not below 0.5, so scaling was not executed. At the
+same time both the response time and cost preferences were below 0.8, and they
+cancelled each other out in the calculation of scaling utility. The metric
+stabilization took longer than previously with 8 new VMs, so the post scaling
+quiet period failed to protect the system. However as the metrics influence
+scaling utility in opposite directions, a further scaling operation was avoided
+here right before the spike ended.
+
+After the spike ended gradually between 00:45:00 and 00:45:30, the request rate
+metric began to show this at 00:46. Cost preference decreased and response time
+preference increased to maximum. The cost increase triggered removal of 8 VMs at
+00:46:30. The termination caused a sudden drop in request rate which brought
+utility down to 0.5 due to rising cost per request per server. This was during
+the quiet period, however, and the metrics stabilized prior to the end of the
+period.
+
+With the spike over and 3 VM instances left, the system ran at approximately
+0.85 utility until 00:55. After this the 6 user ``second wave'' started ramping
+down over the next 10 minutes. Utility slowly decreased due to this until a
+bigger impulse was given by the ramp down of the 3-user ``first wave'' at 01:00.
+Metrics reacted to this at 01:00:30 and the controller brought the system down
+to its initial configuration of 1 application server instance. The remaining
+second wave users finished their rampdown at 01:05 with utility already back at
+maximum since 01:02:30.
+
+The overall $QoE$ value for this scenario is $0.78$. The system did not perform
+well with regard to the spike usage profile represented by this scenarion. The
+scaling threshold was set at $0.7$. Normalizing $QoE$ between a minimum of 0.7
+and maximum of 1.0 (eq. \ref{eq:qoeScore} on page \pageref{eq:qoeScore}) yields
+a score of 27\% to the system given this elasticity scenario.
 
 \subsection{Notes on quality of elasticity}
 
-Text here.
+The QoE scores obtained in the tests were 53\% for scenario 1 and 27\% for
+scenario 2. The controller is better at managing elasticity when the metrics
+change slowly like in scenario 1. Main reasons for this are the delays observed
+after a scaling decision execution was started. It took roughly 3-4 minutes from
+decision to the point where a new virtual machine was available to service
+requests and another 3 minutes for the quiet period during which metrics were
+allowed to stabilize for the new configuration. The elasticity controller
+prototype took a simple approach to running the MAPE-K loop; it was run
+sequentially, one at a time. the total time between two control loop executions
+could range from 20 seconds (no scaling decisions made) to 6-7 minutes when the
+scaling plan execution phase waits to receive control of new VM instances and
+contextualizes them. An improvement could be to run the control loop during
+provisioning and the quiet period and implement the possibility to cancel an
+operation if the metrics start to give an opposite indication while provisioning
+is in progress.
+
+The metrics, which are polled every 15 seconds, are averaged for stability which
+makes the slower to react to changes. A 5-minute average for response time was
+used as it was readily available in the Codahale Metrics open source project,
+but a faster metric could have helped with the reaction time and allowed a
+shorter quiet period for the control loop. Similarly the response time slope
+metric was calculated over 5 minutes, which worked against spike detection in
+scenario 2.
+
+The cost metric is rather superficial in these tests as the size of the
+deployment is small and hence small changes in user amount are percentually
+large. In real systems where this kind of calculation becomes relevant, there
+would be a business case backing it and a reasonable cost preference could be
+derived from it. Issues like billing period granularity, which this prototype
+does not consider, then rise to a more important status. The controller would
+then have to keep track of billing cycles and other real time cost factors to
+properly optimize QoE in terms of cost.
+
+The cloud infrastructure itself played a variable role in the $QoE$ results.
+Particularly in scenario 1, the request rate dropped twice for no apparent
+reason caused by the scenario. As the effect of this was to only reduce utility
+within the threshold limit, these performance fluctuations reduced $QoE$ with no
+reaction from the elasticity controller. In scenario 2, one of the total 15 VM
+instance provisioning operations failed. This is notable because they operations
+are automated and hence user error is eliminated as a possible cause. Many
+things can still fail on many levels, as Amazon runs the EC2 service on
+commodity hardware and the infrastructure is accessed over the Internet and
+provisioning relies on the availability of many other Internet services like the
+Ubuntu package repositories. 
+
+As the cloud provider business model is based on
+guarantees of quantity over absolute guarantees of quality, the design for
+failure approach \todo{cite amazon design for failure} can be used to mitigate
+this kind of risk. Given the pay per use pricing model, it is inexpensive to
+overprovision by a certain percentage as an insurance against failed VM delivery
+or performance fluctuations.
+
 
 \section{Conclusion}
 \label{conclusion}
@@ -1695,11 +1864,16 @@ Summary and conclusion.
 	\label{fig:responseTimeScenario1}
 \end{figure}
 
-
 \begin{figure}[htbp]
 	\includegraphics[width=\textwidth]{images/queuesizegraph-test21}
 	\caption{Application server request queue size during test scenario 1}
 	\label{fig:queueScenario1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/referencethroughputgraph-test21}
+	\caption{Reference throughput during test scenario 1}
+	\label{fig:referenceThroughputScenario1}
 \end{figure}
 
 \clearpage
@@ -1777,6 +1951,12 @@ Summary and conclusion.
 	\includegraphics[width=\textwidth]{images/queuesizegraph-test23}
 	\caption{Application server request queue size during test scenario 2}
 	\label{fig:queueScenario2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/referencethroughputgraph-test23}
+	\caption{Reference throughput during test scenario 2}
+	\label{fig:referenceThroughputScenario2}
 \end{figure}
 
 \clearpage
