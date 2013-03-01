@@ -79,7 +79,27 @@
 \level{MSc Thesis}
 \abstract{
 
-Abstract goes here.
+This thesis is a study of the theory of scalability and its application in an
+infrastructure as a service (IaaS) cloud context. The cloud based utility
+computing paradigm is presented along with how scalability principles are
+applied in the cloud. The differences of scalability in general and the cloud
+concept of elasticity are discussed.
+
+A \textit{quality of elasticity (QoE)} metric is developed to facilitate factual
+discussion and comparison of different cloud platforms' elasticity capabilities
+and the effectiveness of elastic scaling strategies. The metric is based on
+business requirements expressed as \textit{preference functions} over a set of
+lower level metrics. Multi-criteria analysis is applied to these possibly
+conflicting preferences to arrive at a unified value of \textit{utility} based
+on weighting the sum of the preferences. QoE reflects the utility of the system
+over time.
+
+The concept of an elasticity controller application is presented and a prototype
+implementation described in order to exercise the QoE metric. Two load testing
+scenarios are executed against a simple test application whose deployment is
+managed by the prototype controller. The elastic scaling behavior of the system
+is analysed in terms of the QoE results to confirm the prototype is functional
+and to find areas of improvement.
 
 }
 
@@ -289,12 +309,13 @@ example, its deployment.
 
 \subsection{Dimensions}
 
-%The vocabulary: scale up, out, down, in wrt vertical, horizontal  Scalability
-has multiple dimensions. Scaling is said to be \emph{vertical} if the scaling
-point or points in question are internal to some system component. For example,
-the amount of RAM available to a specific server or its CPU speed is a vertical
-scaling point in terms of that server. A vertically scaled system remains
-logically equivalent in the process of scaling. Scaling this way is
+%The vocabulary: scale up, out, down, in wrt vertical, horizontal  
+
+Scalability has multiple dimensions. Scaling is said to be \emph{vertical} if
+the scaling point or points in question are internal to some system component.
+For example, the amount of RAM available to a specific server or its CPU speed
+is a vertical scaling point in terms of that server. A vertically scaled system
+remains logically equivalent in the process of scaling. Scaling this way is
 straightforward as software requires no changes to take advantage of further
 resources on a system. In contrast, adding more server instances,
 \emph{horizontal} scaling, is a more coarse grained operation and requires
@@ -302,15 +323,17 @@ software to be written specifically to leverage the multiple servers by running
 tasks in parallel~\cite{handbook-scaling}.
 
 %The following paragraph is possibly better suited for the rapid elasticity or
-elastic architectures chapter? Switching to a higher level of abstraction in
-system design changes the viewpoint from horizontal to vertical. Horizontal
-scaling of nodes in a server cluster or cloud can be considered vertical scaling
-from the viewpoint of the utility provided (e.g. processing capacity) by it to a
-higher level system using it as a component. This is how infrastructure as a
-service (IaaS) and platform as a service (PaaS) scaling viewpoints differ.
-Horizontal IaaS virtual machine scaling is vertical platform capacity scaling
-from the viewpoint of an application deployed on a PaaS cloud where the platform
-manages the infrastructure.
+%elastic architectures chapter? 
+
+Switching to a higher level of abstraction in system design changes the
+viewpoint from horizontal to vertical. Horizontal scaling of nodes in a server
+cluster or cloud can be considered vertical scaling from the viewpoint of the
+utility provided (e.g. processing capacity) by it to a higher level system using
+it as a component. This is how infrastructure as a service (IaaS) and platform
+as a service (PaaS) scaling viewpoints differ. Horizontal IaaS virtual machine
+scaling is vertical platform capacity scaling from the viewpoint of an
+application deployed on a PaaS cloud where the platform manages the
+infrastructure.
 
 The vertical dimension gets exponentially more expensive as the system size
 increases. The scaled system needs to be changed to a more capable type of
@@ -449,13 +472,15 @@ Choosing the strategy with the most utility for the system’s stakeholders shou
 be the goal.
 
 \subsection{Bounds}
+\label{sec:scalabilityBounds}
 
-%speedup, amount of work done in same time, asymptotic complexity Scalability
-analysis in the design phase of a system can save effort and costs during a
-system’s lifetime as changes are easiest and cheapest to make in the beginning.
-Any real system will have its bounds set by its environment and stakeholders
-through requirements expressed in terms of functional and non-functional
-requirements. Some requirements are harder to meet than others and an
+%speedup, amount of work done in same time, asymptotic complexity 
+
+Scalability analysis in the design phase of a system can save effort and costs
+during a system’s lifetime as changes are easiest and cheapest to make in the
+beginning. Any real system will have its bounds set by its environment and
+stakeholders through requirements expressed in terms of functional and non-
+functional requirements. Some requirements are harder to meet than others and an
 understanding of the laws of scalability helps in managing expectations and
 succeeding in system implementation. This chapter presents basic laws of
 scalability to establish the limits within which scalability engineering takes
@@ -467,9 +492,10 @@ according to Amdahl’s law~\cite{amdahlslaw}. The law can be expressed as a
 function which gives the maximum speedup $S$ that can be achieved with $N$ nodes
 working in parallel,
 
-\[
+\begin{equation}
 S(N) = \frac{1}{(1-P)+\frac{P}{N}},
-\]
+\label{eq:amdahlslaw}
+\end{equation}
 
 where $P$ is the proportion of the program that can be executed in parallel and
 conversely $(1-P)$ the serial proportion. As $N$ tends to infinity, the speedup
@@ -508,11 +534,12 @@ ways. With virtualization, $N$ can also be adjusted to fit the input size.
 Gustafson’s law~\cite{gustafsonslaw} shows that parallel processing is efficient
 given the right kind of problem. It assumes the serial fraction of computation
 $\alpha=1-P$ is static while the divisible amount of data or tasks grows evenly
-with the amount of parallel nodes $N$. The speedup  according to the law is then
+with the amount of parallel nodes $N$. The speedup according to the law is then
 
-\[
+\begin{equation}
 S(N) = N - \alpha(N-1).
-\]
+\label{eq:gustafsonslaw}
+\end{equation}
 
 In practice $\alpha$ will also grow due to overhead caused by increased
 parallelism, but as long as the overhead is insignificant, Gustafson’s law shows
@@ -767,14 +794,17 @@ explodes.
 \end{itemize}
 
 
-\section{Elastic system architecture}  
-\todo{Restructure this chapter to be
-about elasticity and going further into  detail with concepts hierarchically
-below elasticity! Architecture as a subsection.} 
-\label{sec:elasticarchitectures}
-\todo{start with explanation of elasticity vs scalability}
+\section{Elasticity}  
+\label{sec:elasticity}
 
-
+This chapter introduces a theory of elasticity based on the concept of a
+controlled process loop governed by business requirements. Metrics are
+identified tools for defining rules that define conformance to the requirements.
+The concept of measurable utility of a system's performance based on multi-
+criteria analysis of conflicting requirements is developed. The overall utility
+over a range of time is introduced as \textit{quality of elasticity, QoE} and
+the ability of a system to maximize its utility within a defined range given a
+specific usage pattern is defined as the \textit{QoE score}.
 
 \subsection{Elasticity as a controlled process}
 \label{sec:elasticity_as_a_controlled_process}
@@ -1105,6 +1135,7 @@ if applied to its full extent.
 % \end{itemize}
 
 \subsection{Elastic application architecture}
+\label{sec:elasticApplicationArchitecture}
 
 Successful deployment of applications and services on a cloud infrastructure
 requires a scalable application architecture. The cloud is not a silver bullet
@@ -1219,8 +1250,8 @@ offering.
 %
 %\cite{Tung2011}
 
-\section{Elastic scaling prototype setup}
-\label{sec:elasticScalingPrototypeSetup}
+\section{Elastic scaling prototype}
+\label{sec:elasticScalingPrototype}
 
 This chapter details the elasticity controller prototype that was implemented
 for this thesis as a tool to evaluate the controllability of scalable
@@ -1520,8 +1551,8 @@ time. Responsiveness is further hindered by the time it takes to provision insta
 
 This chapter discusses the performance of the elasticity controller prototype
 and the test application in terms of utility preferences and the overall quality
-of elasticity for application deployment described in chapter
-\ref{sec:elasticScalingPrototypeSetup}. Two different testing scenarios are
+of elasticity for application deployment described in chapter~
+\ref{sec:elasticScalingPrototype}. Two different testing scenarios are
 presented along with results of how the controller responded to the request load
 generated by the scenarios. Quality of elasticity is evaluated as a conclusion to the chapter.
 
@@ -1792,12 +1823,67 @@ this kind of risk. Given the pay per use pricing model, it is inexpensive to
 overprovision by a certain percentage as an insurance against failed VM delivery
 or performance fluctuations.
 
+The controller logic implemented for the prototype is based on a reactive
+concept. The controller analyses historical data and makes decisions based on
+that. Introducing a predictive analysis model could help maximize $QoE$ as the
+controller could know to prepare for future load predictively. In the simplest
+cases a simple schedule based analysis could help as e.g. web applications
+typically have usage profiles peaking when people work or ar awake with periods
+of inactivity outside of business ours or during the night.\todo{cite
+predictive}
 
 \section{Conclusion}
-\label{conclusion}
+\label{sec:conclusion}
 
-Summary and conclusion.
+This thesis presented an overview of cloud computing service levels and focused
+on elasticity at the IaaS level. Theory of scalability was examined and divided
+it into horizontal, vertical and structural (algorithmic) dimensions. Tradeoffs
+arising from designing applications for scalability were identified as
+difficulty of synchronizing state, use of unscalable shared resources which
+quickly become bottlenecks, exponential cost of vertical scaling and design
+effort for structural scalability.
 
+The theory of horizontal scaling was examined further as that is the kind of
+scaling most applicable to cloud applications. The limits of scalability were
+discussed based on Amhdal's~law \cite{amdahlslaw} and Gustafson's
+law~\cite{gustafsonslaw} in chapter~\ref{sec:scalabilityBounds}. Analysis of
+scalability based on multi criteria analysis of metrics instead of opinions and
+hearsay was developed based on the work of
+Duboc~\cite{DubocUtility}\cite{Duboc2007}.
+
+The scalability theory was taken into cloud infrastructure context in
+chapther~\ref{sec:cloudscalability}. The concept of rapid elasticity was
+introduced and the lifecycle of an elastic virtual machine instance was
+introduced. Availability of data on the system's performance and the quality of
+that data was identified as a key success factor for cloud scalability.
+
+Cloud platform and application elasticity was examined further from the
+viewpoint of a MAPE-K control loop in chapter~\ref{sec:elasticity}. The concept
+of utility of an application deployment was developed based on multi-criteria
+analysis of business requirements. Quality of Elasticity (QoE) was introduced as
+a metric of utility over time. To facilitate comparisons and contextualization
+of QoE to a specific system in a specific environment, a QoE score metric was
+defined as the normalized value of QoE between a deployment specific lower bound
+threshold and maximum.
+
+Design principles of elastic application architectures were discussed briefly in
+chapter~\ref{sec:elasticApplicationArchitecture}. The design for failure
+philosophy is a key point in thinking of the fitness for purpose of cloud
+provider SLAs. The cloud provider business model and offering is fundamentally
+different from the traditional IT operations without virtualization. Designing
+applications so that they can handle infrastructure failures is key to success.
+
+A prototype elasticity controller implementation along with its requisite
+monitoring infrastructure is presented in
+chapter~\ref{sec:elasticScalingPrototype}. The prototype is then put to test in
+chapter~\ref{sec:results}. The results confirm the applicability of the
+controller to its purpose and indicate areas in need of further study that have
+the potential to improve the QoE scores attained with the controller. In
+particular the quality and reactiveness of metrics, VM provisioning speed and
+parallelization of the elasticity controller's decision making functionality are
+identified as areas of possible improvement. The quality of the controller's
+decisions could be improved by moving from a reactive analysis model to a
+predictive one.
 
 \clearpage
 \appendix
