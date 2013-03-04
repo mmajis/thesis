@@ -184,7 +184,7 @@ run applications with an adjustable amount of server instances depending on the
 current or anticipated usage level of the application. This flexibility and the
 speed with which the deployment can be adjusted have enabled e.g. web
 applications to scale from a handful of concurrent sessions to millions
-\todo{citation?} and back without committing to a large amount of computing
+\cite{cloudberkeleyviewacm} and back without committing to a large amount of computing
 resources which would remain deployed but unused during periods of low usage. A
 deployment capable of serving millions of users is understandably expensive to
 maintain, but the cloud approach with its prevalent pay per use pricing enables
@@ -194,21 +194,20 @@ resources as would be the case with dedicated hardware servers.
 The ability of an application deployment on a cloud platform to change in size
 dynamically at runtime is referred to as elasticity or rapid elasticity
 ~\cite{nistdefinition}. This capability to automatically scale the deployment in
-(smaller) or out (larger) depending on current demand is a major proponent in
-the hype and success \todo{citation for elasticity importance in cloud success}
-of cloud platforms in recent years.
+(smaller) or out (larger) depending on current demand is a major factor in
+the hype and success~\cite{cloudberkeleyviewacm} of cloud platforms in recent years.
 
 The goal of this thesis is to explore the theory and practice of rapid
 elasticity. The concept of quality of elasticity is developed and put to test
-using a prototype implementation of an elasticity controller, a piece of cloud
-infrastructure software whose responsibility is to decide on and implement cloud
-provisioning actions. The focus is on hybrid infrastructure as a service (IaaS)
-clouds and the provisioning of virtual machines in such clouds. The elasticity
-controller concept is a step towards a more service oriented cloud offering.
-Rather than provide infrastructure with an interface modeled exactly after the
-operations performed on IaaS VMs, a service-oriented approach aims to provide
-more abstract interfaces which address the cloud customer’s problem domain
-rather than the cloud provider’s. This includes e.g. cross-cloud
+using a prototype implementation of an elasticity controller~\cite{VRB11}, a
+piece of cloud infrastructure software whose responsibility is to decide on and
+implement cloud provisioning actions. The focus is on infrastructure as a
+service (IaaS) clouds and the provisioning of virtual machines in such clouds.
+The elasticity controller concept is a step towards a more service oriented
+cloud offering. Rather than provide infrastructure with an interface modeled
+exactly after the operations performed on IaaS VMs, a service-oriented approach
+aims to provide more abstract interfaces which address the cloud customer’s
+problem domain rather than the cloud provider’s. This includes e.g. cross-cloud
 capabilities~\cite{frominfratoservice}.
 
 The thesis is structured as follows. Section~\ref{sec:scalability} discusses the
@@ -311,11 +310,12 @@ example, its deployment.
 
 %The vocabulary: scale up, out, down, in wrt vertical, horizontal  
 
-Scalability has multiple dimensions. Scaling is said to be \emph{vertical} if
-the scaling point or points in question are internal to some system component.
-For example, the amount of RAM available to a specific server or its CPU speed
-is a vertical scaling point in terms of that server. A vertically scaled system
-remains logically equivalent in the process of scaling. Scaling this way is
+Scalability has multiple dimensions as illustrated in
+figure~\ref{fig:scalabilityDimensions}. Scaling is said to be \emph{vertical} if
+the scaling point or points in question are internal to a server. For example,
+the amount of RAM available to a specific server or its CPU speed is a vertical
+scaling point in terms of that server. A vertically scaled system remains
+logically equivalent in the process of scaling. Scaling this way is
 straightforward as software requires no changes to take advantage of further
 resources on a system. In contrast, adding more server instances,
 \emph{horizontal} scaling, is a more coarse grained operation and requires
@@ -363,6 +363,12 @@ time and space complexity of its algorithms~\cite{algorithmBook} and
 additionally support parallel processing in terms of tasks and
 data~\cite{foundationsOfParallelBook}.
 
+\begin{figure}[htbp]
+	\includegraphics[width=\textwidth]{images/scalingDimensions}
+	\caption{Three dimensions of scalability}
+	\label{fig:scalabilityDimensions}
+\end{figure}
+
 Task parallelism is a feature of software systems which are capable of
 simultaneously executing multiple tasks on the same or different data. A serial
 program, in contrast, must proceed with a single task at a time. Task parallel
@@ -381,17 +387,15 @@ ordinary computer users have donated CPU time to search for extraterrestrial
 intelligence by running an application which analyzes pieces of a large set of
 radio telescope data~\cite{Korpela2001}\cite{setiathomewebsite}. More recently
 Google and e.g. the open source distributed database Hadoop have made use of the
-MapReduce programming model \todo{mapreduce citation}  for distributed data
+MapReduce programming model~\cite{Ramachandran2011} for distributed data
 parallel computing.
 
 Structural scalability is closely related to the horizontal scaling dimension.
 To take full advantage of horizontal scaling in, the application has to support
 parallel execution and minimize synchronization between the parallel threads of
-execution. Depending on the use case the parallelism can be either task or data
+execution. Depending on the use case parallelism can be either task or data
 based, but in both cases the notion of parallelism has to be built in to the
 application.
-
-\missingfigure{Illustrate scalability dimensions: horizontal, vertical, structural, }
 
 \subsection{Tradeoffs}
 
@@ -413,11 +417,10 @@ between nodes in a distributed system. If such communication can be avoided or
 minimized, the software scales well; Adding servers does not cause excessive use
 of network bandwidth or decrease the benefit gained by adding each new server
 due to increased processing needed for keeping the system more complex state
-synchronized. For data parallel computations, the MapReduce\todo{cross ref when
-there is more on MapReduce in later chapter} model enables this on a massive
-scale but requires algorithms to fit its mold with two distinct phases,
-\emph{map} and \emph{reduce}. The map phase distributes data to mapper nodes
-where it is processed. Intermediate results from the map phase are fed to
+synchronized. For data parallel computations, the MapReduce model enables this
+on a massive scale but requires algorithms to fit its mold with two distinct
+phases, \emph{map} and \emph{reduce}. The map phase distributes data to mapper
+nodes where it is processed. Intermediate results from the map phase are fed to
 reducer nodes for another round processing which ends with the final result.
 Both of the steps can be processed in parallel on distributed systems. The model
 clearly requires a specific approach to algorithm implementation in order to
@@ -430,21 +433,21 @@ data. ACID (Atomicity, Consistency, Isolation, Durability) transactions are
 inherently serial in nature so a shared relational database, for example,
 quickly emerges as a bottleneck for scalability. To remedy this, databases can
 be scaled by applying various techniques such as
-sharding~\cite{introToSharding}. Need for ACID transactions should also be
+sharding~\cite{scalableDataStores}. Need for ACID transactions should also be
 scrutinized. Many highly scalable systems make do with the BASE (Basically
 Available, Soft state, Eventually Consistent) consistency model in favor of the
-more strict ACID model\todo{cite BASE usage}.
+more strict ACID model~\cite{tivitbestpractices}\cite{VRB11}\cite{Buyya2010intercloud}.
 
-When scaling down or in, the tradeoff is with ensuring performance and
+When scaling in, the tradeoff is with ensuring performance and
 reliability while minimizing cost. When a deployment is at its minimum size,
 it’s difficult to reliably react to increased load without false positives and
-try to keep the application responsive~\todo{citation for difficulty of deciding
-when to scale up}. Scaling up or out to accommodate the load will take some
-time, so the decision should be made early enough to keep the application
-responsive during the scaling activity. Ensuring performance, reliability and
-fault tolerance as required by e.g a service level agreement sets limits for the
-minimum system configuration. A capacity buffer of appropriate size has to be
-kept to allow time for scaling activities.
+try to keep the application responsive. Scaling out to accommodate the
+load will take some time, so the decision should be made early enough to keep
+the application responsive during the scaling activity~\cite{Roy2011}. Ensuring
+performance, reliability and fault tolerance as required by e.g a service level
+agreement~\cite{Funika2011}\cite{Iqbal2011} sets limits for the minimum system
+configuration. A capacity buffer of appropriate size has to be kept to allow
+time for scaling activities.
 
 At code level, in addition to the need for communication between horizontal
 nodes, tradeoffs are made between the asymptotic complexity of algorithms in
@@ -497,20 +500,31 @@ S(N) = \frac{1}{(1-P)+\frac{P}{N}},
 \label{eq:amdahlslaw}
 \end{equation}
 
-where $P$ is the proportion of the program that can be executed in parallel and
-conversely $(1-P)$ the serial proportion. As $N$ tends to infinity, the speedup
-tends to $1/(1-P)$. \todo{include a graph of Amdahl’s law}
+where $P$ is the portion of the program that can be executed in parallel and
+conversely $(1-P)$ the serial portion. As $N$ tends to infinity, the speedup
+tends to $1/(1-P)$. 
+
 
 For example, if a given computation has a serial part which is 10\% of the
 complete computation, then the benefit of increasing parallelism for the
 remainder of the computation will tend towards zero as the number of parallel
 nodes increases. The upper bound for $S(N)$ in this case is 10. The computation
 can be sped up at most by a factor of 10 regardless of the amount of parallel
-processors introduced to the system. Before reaching this theoretical limit,
-typically a practical limit for evenly dividing $P$ into parallel tasks or data
-sets would be reached \todo{cite practical limit of scaling in Amdahl’s land}.
-This implies that software design level structural scalability is very important
-in order to keep the non-parallelizable code to a minimum.
+processors introduced to the system. This along with other values of $P$ are
+illustrated in figure~\ref{fig:amdahlsLaw}. 
+
+Before reaching the theoretical limit given by Amdahl's law, typically a
+practical limit for evenly dividing $P$ into parallel tasks or data sets would
+be reached. This implies that software design level structural scalability is
+very important in order to keep the non-parallelizable code to a minimum.
+
+\begin{figure}[h!]
+	\includegraphics[width=\textwidth]{images/AmdahlsLaw}
+	\caption{Amdahl's law states that the maximum speedup of a program when running 
+	it on multiple processors is limited by the portion of the program that can be 
+	run in parallel. (Image source: Wikimedia Commons~\cite{amdahlslawimage})}
+	\label{fig:amdahlsLaw}
+\end{figure}
 
 Amdahl’s law underlines the importance of algorithmic optimization to maximize
 the speedup achievable with parallel processing. However, although the benefit
@@ -518,7 +532,7 @@ of adding more parallel nodes tends to zero, the processing capacity of each of
 the nodes does not of course diminish in the process. In fact, the entire array
 of parallel nodes is idle for $1-P$ percent of the execution. To make efficient
 use of a horizontally scalable system, the problem therefore needs to be of a
-nature which benefits from a large number of $N$. That is, the proportion of
+nature which benefits from a large number of $N$. That is, the portion of
 inherently serial code $1-P$ needs to be minimized and the problem needs to be
 divisible to $N$ or more parallel parts.
 
@@ -544,15 +558,27 @@ S(N) = N - \alpha(N-1).
 In practice $\alpha$ will also grow due to overhead caused by increased
 parallelism, but as long as the overhead is insignificant, Gustafson’s law shows
 that scaling horizontally is efficient up to large numbers of $N$ if the data or
-task size grows with the system.
+task size grows with the system. This is illustrated in figure~\ref{fig:gustafsonsLaw}.
 
 In contrast to Amdah’ls law, Gustafson shows that parallel computing in a
 dynamic environment (data divided into parts equal in amount to that of
-computing nodes) scales very well.
+computing nodes) scales very well. Recently multicore processors have brought
+more possibilities to architecting scalability~\cite{amhdalmulticore} but the
+basic principles from the 1960s still apply for computations done either with
+processor cores or virtual nodes on a cloud platform. Similar high level
+algorithms work for both cases, and the source of computing resources can be
+thought of as an abstract concept.
 
-\missingfigure{Graphs to roughly compare Amdahl’s law and Gustafson’s law}
+\begin{figure}[h!]
+	\includegraphics[width=\textwidth]{images/GustafsonsLaw}
+	\caption{Gustafson's law states that speedup increases linearly given the 
+	amount of 
+	work grows evenly with the amount of nodes available to process it. (Image 
+	source: 
+	Wikimedia Commons~\cite{gustafsonslawimage})}
+	\label{fig:gustafsonsLaw}
+\end{figure}
 
-\todo{Gustafson’s law -> mapreduce}
 
 %Scalability models
 
@@ -606,7 +632,7 @@ and load is balanced among them. Scaling the network, load balancers and other
 infrastructure tools like monitoring is needed when the system grows to surpass
 their capacity~\cite{VRB11}.
 
-\subsection{Rapid elasticity}\todo{Differentiate scaling and rapid elasticity “rubber band”}
+\subsection{Rapid elasticity}
 
 A cloud is said to be elastic~\cite{nistdefinition} if the resources it provides
 can be provisioned and deprovisioned dynamically and automatically. This implies
@@ -618,20 +644,23 @@ which cloud provisioning actions are carried out. The actions should resolve as
 fast as possible to enable constant matching of the size of deployment to
 service demand.
 
-%something about the physical level of cloud...?
-
 The benefit of elasticity is realized when the gap between demand and capacity
-can be kept as small as possible. When demand increases and more capacity is
-needed, rapid elasticity can enable the service to scale out quickly enough so
-that no requests need to be refused. Scaling in rapidly when demand decreases
-means unneeded resources are kept reserved for a shorter time and consequently
-less money is wasted on unused capacity. The utilization rate of provisioned
-resources can be kept at a better level compared to a system that would prepare
-for demand spikes by overprovisioning resources which then end up being idle
-during non peak demand.
+can be kept as small as possible (see figure~\ref{fig:oldVsNewScalability}). When
+demand increases and more capacity is needed, rapid elasticity can enable the
+service to scale out quickly enough so that no requests need to be refused.
+Scaling in rapidly when demand decreases means unneeded resources are kept
+reserved for a shorter time and consequently less money is wasted on unused
+capacity. The utilization rate of provisioned resources can be kept at a better
+level compared to a system that would prepare for demand spikes by
+overprovisioning resources which then end up being idle during non peak demand.
 
-\missingfigure{graph of demand vs capacity with steps smaller using elastic
-cloud vs hardware (Handbook of cloud computing)}.
+\begin{figure}[h!]
+	\includegraphics[width=\textwidth]{images/oldVsNewScaling}
+	\caption{Elastic scaling allows capacity closely follow demand whereas
+	traditional non-virtualized capacity is slower to provision and typically
+	remains unused but reserved when demand decreases.}
+	\label{fig:oldVsNewScalability}
+\end{figure}
 
 \subsection{Virtual machine lifecycle} \label{sec:VMLifeCycle}
 
@@ -768,8 +797,7 @@ requirements on fault-tolerance and availability. Understanding the economics of
 IT systems deployed on clouds is a key success factor in the long run
 \cite{Suleiman2011}. Cloud adoption in enterprises begun with simple cost saving
 goals but is moving towards enablement of lean enterprises capable of quick
-changes in business direction.\todo{Find citation of shifting business goals
-with cloud}
+changes in business direction~\cite{Marston2011}.
 
 Clouds are a technology which levels the IT system playing field considerably
 between startups and large corporations. With the pay-per-use model, large up
@@ -882,11 +910,10 @@ of the application's domain model (database). This kind of monitoring takes more
 effort compared to non-intrusive technical metrics since the monitoring has to
 be customized for the application. The choice of customization or relying on
 lower level metrics is a tradeoff one has to make when designing an elastic
-system.
-
-A mapping from business requirements to technical requirements may be necessary
-to facilitate communication of the requirements from their source down to the
-implementation of the controller. \todo{cite requirement mapping}
+system. A mapping from business requirements to technical
+requirements~\cite{Chen2008}\cite{Wu2011}\cite{Suleiman2011} may be necessary to
+facilitate communication of the requirements from their source down to the
+implementation of the controller.
 
 \subsection{Multi-criteria decision analysis} Often the requirements given for
 the performance of a system conflict each other. If, for example, a system is
@@ -897,7 +924,7 @@ access time to data. The requirements may form a complex network of this kind of
 interdependencies. It quickly becomes difficult to specify simple rules for
 satisfying all the requirements simultaneously.
 
-Multi-criteria decision analysis \todo{cite multi criteria analysis} is a method
+Multi-criteria decision analysis~\cite{Duboc2007}\cite{Ke2012} is a method
 for finding an optimal decision considering conflicting criteria. It can be
 applied here to formalize the decision making under conflicting requirements.
 
@@ -948,9 +975,8 @@ The range for $QoE$ is the same as that of the utility function, i.e. $QoE \in [
 For real systems the utility function is represented by monitored metric values
 gathered over time rather than a mathematical function. In this case the
 integral can be approximated by means of numerical analysis. The trapezoid
-method \todo{cite trapezoid method} is used for this as the step from each data
-point to the next is linear and the method gives exact results in such a case
-\todo{cite trapezoid exact for linear, calculus book?}.
+method \todo{stewart2010calculus} is used for this as the step from each data
+point to the next is linear and the method gives exact results in such a case.
 
 The numerical trapezoid method version of the $QoE$ formula is
 
@@ -1033,17 +1059,18 @@ quickly and correctly. These factors, namely \textit{speed of decision making}
 and \textit{correctness of scaling decisions} are up to the elasticity
 controller. Decision making speed can vary based on the the implementation of
 the controller. Scaling decisions can be made reactively when metrics pass their
-thresholds or predictively based on predictive algorithms . In simple cases the
+thresholds or predictively based on predictive algorithms. In simple cases the
 predictive algorithm could be as simple as specifying time ranges throughout the
 day and scaling out or in according to typical usage. Advanced algorithms do
-exist for more complicated usage patterns~\cite{Iqbal2011}\cite{Tan2012}\cite{Roy2011}\cite{Chen2011}\cite{Wilkes2010}\cite{Cunha2011}. Predictive scaling is
-possible as long as there is some indicator in the metrics that can be used to
-decide that higher load is about to come. For web sites, sudden spikes of
-activity like click throughs from a social media discussion (``Slashdot
-effect'') with a link to some normally low usage server are impossible to
-predict. In such a case, the performance is up to how quickly the spike of
-activity is identified and whether the reaction to it matches the size of the
-spike.
+exist for more complicated usage patterns~\cite{Iqbal2011}\cite{Tan2012}\cite{Ro
+y2011}\cite{Chen2011}\cite{Wilkes2010}\cite{Cunha2011}.
+Predictive scaling is possible as long as there is some indicator in the metrics
+that can be used to decide that higher load is about to come. For web sites,
+sudden spikes of activity like click throughs from a social media discussion
+(``Slashdot effect'') with a link to some normally low usage server are
+impossible to predict. In such a case, the performance is up to how quickly the
+spike of activity is identified and whether the reaction to it matches the size
+of the spike.
 
 Scaling out horizontally is helpful if the application is structured to take
 advantage of it. The \textit{level of parallelization} exhibited by the
@@ -1146,57 +1173,76 @@ Algorithms for parallel computation like MapReduce and architectural patterns
 like master/worker and cell based architecture are important building blocks of
 harnessing the processing power of a cloud service. The general rule is to
 design the architecture so as to have as few as possible shared components in a
-deployment. Shared components will end up being the bottlenecks when scaling out
-for two reasons; They get hit the hardest from multiple other system components
-when the system is under heavy load and they are often harder to scale
-themselves \todo{Cite shared component hard to scale}. Also the unavailability
-of a shared component can have far reaching effects on the whole application.
-Shared components quickly become single points of failure \todo{cite}.
+deployment. Shared components will end up being the bottlenecks or hotspots when
+scaling out for two reasons; They get hit the hardest from multiple other system
+components when the system is under heavy load and they are often harder to
+scale themselves~\cite{caseforsharednothing}. Also the unavailability of a
+shared component can have far reaching effects on the whole application. Shared
+components are actually single points of failure~\cite{cloudarchitecturepatternsbook}.
 
 Public cloud services are built on commodity hardware. The durability and
 serviceability of this kind of hardware is by no means in the same class as that
 of mainframe hardware. The way to cope with failure of relatively cheap hardware
-is to accept it happens and design for failure  \todo{cite amazon best practices
-or oreilly patterns book if not an academic paper}. Cloud resource pricing is
-based on low margins and high volume \todo{cite} and best practices advocate
-``buying insurance'' by adding redundancy at every step.
+is to accept it happens and design for
+failure~\cite{cloudarchitecturepatternsbook}. Cloud resource pricing is based on
+low margins and high volume and best practices advocate ``buying insurance'' by
+adding redundancy at every step~\cite{Varia2010}.
 
 Designing for failure implies automating infrastructure and application
 deployment and maintenance tasks as fully as possible. Automated recovery from
 server failures can be implemented quite simply by terminating a misbehaving
 server instance and provisioning another one to replace it. This is in fact one
-of the scenarios Amazon Web Services covers in their SLA\todo{cite amazon ec2
-sla}. Notable omissions from the SLA are server instance uptime and performance.
-This underlines the design for failure philosophy of their cloud service
-offering.
+of the scenarios Amazon Web Services covers in their SLA~\cite{ec2sla}. Notable
+omissions from the SLA are server instance uptime and performance. This
+underlines the design for failure philosophy of their cloud service offering.
 
-\todo{Mention netflix chaos monkey wrt design for failure, maybe throw in the FAAS tech report \cite{FAASBerkeleyTechRep}}
+Notable cloud applications apply this principle by making it standard practice
+to simulate failures in the infrastructure. The streaming movie service Netflix,
+for example, has built and open sourced a component of their infrastructure
+called Chaos Monkey which randomly shuts down virtual machine instances in their
+production environment. The existence of such a service focuses developers to
+design fault tolerant solutions. Research ~\cite{FAASBerkeleyTechRep} on this
+kind of failure injection frameworks has lead to e.g. the idea of a failure
+generation service which could be a standard part of a cloud provider's
+services.
 
+Knowledge of failures is key to the design for failure approach. Monitoring the
+application and the infrastructure is therefore an important architectural
+aspect. Cloud providers offer monitoring services that focus on the
+infrastructure performance, but application specific monitoring has to be set up
+in order to be able to handle failures from a business requirement and service
+level agreement perspective as well as technically. An additional benefit of not
+relying on the cloud provider's monitoring is avoiding cloud vendor lock-
+in~\cite{Petcu2012}. With external services like the open source Ganglia
+monitoring system~\cite{gangliapaper} or commercial alternatives like New Relic
+or AppDynamics, it remains possible to add redundancy to the architecture also
+at the cloud provider level by deploying on more than one cloud.
+
+Feeding the monitoring system with metrics from the application is a kind of a
+glorified logging task. Aspect oriented programming can be used to inject
+metrics to business logic without adding complexity. Manually written wrapper
+classes with metrics instrumentation are another albeit more disruptive
+approach.
 
 %app related architecture items
-\begin{itemize}
-\item elasticity enables design for failure
-\item What kind of apps/architectures can benefit from elasticity
-\item Data intensive, how to benefit? (IO bound, memory bound)
-\item Computation intensive, how to benefit? \todo{HASN'T THE ABOVE BEEN COVERED ALREADY?}
-\item Other categories? Mobile?
-\item How does an application provide information on performance based on which it can be scaled?
-	\begin{itemize}
-	\item Quality of elasticity
-	\item Scaling metrics
-		\begin{itemize}
-		\item Requests per time period?
-		\item Depth of work queue?
-		\item Computational patterns?
-		\item Event broadcast mechanism?
-		\item Other way to relay information?
-		\item Aspect oriented? Cross-cutting concern
-		\item Latency
-		\item Costs (VM hours, ...)
-		\item SLA
-		\end{itemize}
-	\end{itemize}
-\end{itemize}
+% \begin{itemize}
+% \item elasticity enables design for failure
+% 	\begin{itemize}
+% 	\item Quality of elasticity
+% 	\item Scaling metrics
+% 		\begin{itemize}
+% 		\item Requests per time period?
+% 		\item Depth of work queue?
+% 		\item Computational patterns?
+% 		\item Event broadcast mechanism?
+% 		\item Other way to relay information?
+% 		\item Aspect oriented? Cross-cutting concern
+% 		\item Latency
+% 		\item Costs (VM hours, ...)
+% 		\item SLA
+% 		\end{itemize}
+% 	\end{itemize}
+% \end{itemize}
 
 % ARCHITECTURE STUFF:
 
@@ -1270,10 +1316,10 @@ The prototype was designed to be cloud provider agnostic. The Amazon EC2 cloud
 platform is used here as the deployment platform, but all components are
 implemented using open source software with the intention of supporting any
 single cloud platform or multiple platforms at once. Deploying an application
-over multiple clouds serves to increase fault tolerance \todo{cite cross cloud
-fault tolerance}. On the other hand, not tying up the application to proprietary
-cloud provider APIs helps to avoid cloud vendor lock-in, which could make
-migration to other deployment platforms cost-prohibitive in the long run.
+over multiple clouds serves to increase fault tolerance. On the other hand, not
+tying up the application to proprietary cloud provider APIs helps to avoid cloud
+vendor lock-in which could make migration to other deployment platforms cost-
+prohibitive in the long run~\cite{Petcu2012}.
 
 The technologies and software components used in the implementation of the
 controller as well as the simple controlled application and environment are
@@ -1401,7 +1447,7 @@ as the cost per VM instance $c_{vm}$ divided by $t_{vm}$ , i.e.
 	\label{eq:costMin}
 \end{equation}
 
-where $t_{vm}$ is measured only when $r < r_{min}$.\todo{can the throughput metric be simplified, the response time rule does not make sense?} 
+where $t_{vm}$ is measured only when $r < r_{min}$.\todo{can the throughput metric be simplified, the response time rule does not make sense? NOT FOR NOW.} 
 
 The application running on \textit{m1.small} instances on Amazon EC2 will
 typically handle approximately 3 requests per second with a response time less
@@ -1435,9 +1481,7 @@ elasticity controller application written specifically for this prototype. The
 controller queries the Ganglia server for system state metrics every 20 seconds
 and calculates the utility based on the preference functions defined for the
 business application. The controller first analyses the system utility. If
-utility is below a threshold of 0.5 \todo{Remember to update final utility
-scaling threshold!}, a decision is made to carry out a scaling operations. The
-controller then proceeds to the planning phase.
+utility is below a threshold of 0.7, the controller proceeds to the planning phase.
 
 For the purpose of making a plan to scale the system either out or in, the
 controller application uses a \text{scaling function} $S(X)$ to indicate the
@@ -1472,7 +1516,12 @@ is done in the direction indicated by the scaling function $S(X)$ and the amount
 of server instances to add or remove depends on the slope. With gradual growth,
 the amount of application server nodes is increased by half. If the response
 time slope indicates a spike is underway, the server instance count is
-multiplied by three.
+multiplied by three. 
+
+Further thresholds apply to the planning phase. In order to scale out, the
+request rate needs to be larger than 2 requests/s. To avoid repeatedly adjusting
+the size of the deployment, scaling in requires the scaling utility function
+value to be $S(X) < 0.5$.
 
 For scaling in, the amount is decided with the use of the cost preference
 function. The cost preference is calculated with decreasing instance count until
@@ -1799,10 +1848,10 @@ The cost metric is rather superficial in these tests as the size of the
 deployment is small and hence small changes in user amount are percentually
 large. In real systems where this kind of calculation becomes relevant, there
 would be a business case backing it and a reasonable cost preference could be
-derived from it. Issues like billing period granularity, which this prototype
-does not consider, then rise to a more important status. The controller would
-then have to keep track of billing cycles and other real time cost factors to
-properly optimize QoE in terms of cost.
+derived from it~\cite{Suleiman2011}. Issues like billing period granularity,
+which this prototype does not consider, then rise to a more important status.
+The controller would then have to keep track of billing cycles and other real
+time cost factors to properly optimize QoE in terms of cost.
 
 The cloud infrastructure itself played a variable role in the $QoE$ results.
 Particularly in scenario 1, the request rate dropped twice for no apparent
@@ -1816,21 +1865,21 @@ commodity hardware and the infrastructure is accessed over the Internet and
 provisioning relies on the availability of many other Internet services like the
 Ubuntu package repositories. 
 
-As the cloud provider business model is based on
-guarantees of quantity over absolute guarantees of quality, the design for
-failure approach \todo{cite amazon design for failure} can be used to mitigate
-this kind of risk. Given the pay per use pricing model, it is inexpensive to
-overprovision by a certain percentage as an insurance against failed VM delivery
-or performance fluctuations.
+As the cloud provider business model is based on guarantees of quantity over
+absolute guarantees of quality, the design for failure approach~\cite{Varia2010}
+can be used to mitigate this kind of risk. Given the pay per use pricing model,
+it is inexpensive to overprovision by a certain percentage as an insurance
+against failed VM delivery or performance fluctuations.
 
 The controller logic implemented for the prototype is based on a reactive
 concept. The controller analyses historical data and makes decisions based on
-that. Introducing a predictive analysis model could help maximize $QoE$ as the
-controller could know to prepare for future load predictively. In the simplest
-cases a simple schedule based analysis could help as e.g. web applications
-typically have usage profiles peaking when people work or ar awake with periods
-of inactivity outside of business ours or during the night.\todo{cite
-predictive}
+that. Introducing a predictive analysis model could help maximize $QoE$
+~\cite{cloudberkeleyviewacm} as the controller could know to prepare for future
+load before it arrives by either provisioning new resources or deciding not to
+terminate old ones just before load is about to increase. In the simplest cases
+a simple schedule based analysis could help as e.g. web applications typically
+have usage profiles peaking when people work or ar awake with periods of
+inactivity outside of business ours or during the night.
 
 \section{Conclusion}
 \label{sec:conclusion}
