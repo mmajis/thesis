@@ -212,18 +212,18 @@ capabilities~\cite{frominfratoservice}.
 
 The thesis is structured as follows. Section~\ref{sec:scalability} discusses the
 different forms of scalability in system and software architectures.
-Section~\ref{sec:cloudscalability} presents cloud scalability in detail.
-Section~\ref{sec:elasticarchitectures} provides a software architecture viewpoint
-and introduces the notion of quality of elasticity for applications.
-Section~\ref{sec:elasticitycontroller} presents the elasticity controller in theory
-and discusses prerequisites, benefits and drawbacks.
+Section~\ref{sec:cloudscalability} presents scalability in cloud context.
+Section~\ref{sec:elasticity} discusses the theory of elastic scaling and
+develops a metric, quality of elasticity, for it. Architectural patterns to take
+full advantage of elasticity are also presented in this chapter.
+Section~\ref{sec:elasticScalingPrototype} presents an elasticity controller
+prototype along with its requisite monitoring infrastructure used in the thesis
+to put the theory to test in practice.
 
-A prototype elasticity controller is presented in section \ref{prototype} along
-with test results for two scaling scenarios using it. Monitoring a cloud
-application externally and internally via a performance monitoring aspect
-(aspect oriented programming, AOP) are compared in the test scenarios. Related
-work is discussed in section  \ref{relatedwork} and section~\ref{conclusion}
-presents conclusions.
+Results of two test load scenarios are presented in chapter~\ref{sec:results}. The
+two scenarios compare quality of elasticity under a gradually growing load and a
+sudden spike of load. Areas of further development are discussed based on the
+findings of the tests. Finally, chapter~\ref{sec:conclusion} concludes the thesis.
 
 \subsection{Cloud computing terminology} At this point in time, cloud computing
 is often referred to quite vaguely as a massively scalable model for
@@ -245,7 +245,7 @@ or public cloud. They remain functionally independent but the private clouds
 gain benefits in tolerance against hardware failure and resource exhaustion as
 workload (i.e. virtual machines) can be shifted elsewhere in case of a shortage
 of capacity. Such expansion of a private cloud is called
-cloudbursting~\cite{cloudbursting}. When a private cloud is the actor in
+cloudbursting~\cite{nistdefinition}. When a private cloud is the actor in
 cloudbursting, it is considered functionally transparent to the users of the
 cloud. The cloud user has a single interface towards the cloud which handles
 bursting behind the scenes. Bursting may also be implemented outside any cloud
@@ -387,7 +387,7 @@ ordinary computer users have donated CPU time to search for extraterrestrial
 intelligence by running an application which analyzes pieces of a large set of
 radio telescope data~\cite{Korpela2001}\cite{setiathomewebsite}. More recently
 Google and e.g. the open source distributed database Hadoop have made use of the
-MapReduce programming model~\cite{Ramachandran2011} for distributed data
+MapReduce programming model~\cite{handbook-mapreduce} for distributed data
 parallel computing.
 
 Structural scalability is closely related to the horizontal scaling dimension.
@@ -463,10 +463,10 @@ other factors. Tradeoffs like these are important to understand when designing
 systems. The relative importance of scalability factors can be derived from the
 requirements of the system in question. By going after the most important
 factors, the utility (change introduced by scaling which the stakeholders
-experience as a tangible benefit)~\cite{DubocUtility} of the scaling effort is
+experience as a tangible benefit)~\cite{Duboc2007} of the scaling effort is
 the highest.
 
-Scalability can be analyzed as a multi-criteria optimization problemwhere, given
+Scalability can be analyzed as a multi-criteria optimization problem where, given
 the priorities of the system in question, different scaling strategies will
 perform differently as the system grows. Multi-criteria analysis will help to
 choose the correct scaling factors from both technical and stakeholder benefit
@@ -758,11 +758,11 @@ business requirements set for the system. Good requirements are measurable and
 unambiguous. What is measurable depends on the monitoring capabilities of the
 cloud system. The monitoring subsystem needs to be customizable so that service
 specific metrics can be included in the data set and scaling logic. Separate
-monitoring tools like Ganglia \cite{gangliapaper} and Nagios \cite{nagios} serve
-this purpose in hybrid or highly specialized configurations because the cloud
-customer has full control over the monitoring subsystem and it can be used in
-private clouds as well across the whole hybrid. The tradeoff is having to
-maintain that part of the system as well.
+monitoring tools like Ganglia \cite{gangliapaper} serve this purpose in hybrid
+or highly specialized configurations because the cloud customer has full control
+over the monitoring subsystem and it can be used in private clouds as well
+across the whole hybrid. The tradeoff is having to maintain that part of the
+system as well.
 
 Quality of monitoring data is important to make timely decisions. With large
 deployments, the amount of data can be large and analyzing it all can put load
@@ -848,9 +848,9 @@ in it. An essential part of such a system is a controller component external to
 the application itself. The responsibilities of the \emph{elasticity controller}
 are to monitor the system, analyse the metrics, plan corrective actions and
 execute them. This is known as a MAPE-K control
-loop~\cite{Huebscher2008}\cite{Mueller2009} named after its phases (Monitor,
-Analyse, Plan, Execute, Knowledge). The knowledge in MAPE-K loops is shared data
-between the actual MAPE phases.
+loop~\cite{Huebscher2008}\cite{Mueller2009} named after its phases (Monitoring,
+Analysis, Plannning, Execution, Knowledge). The knowledge in MAPE-K loops is
+shared data between the actual MAPE phases. The loop is illustrated in figure~\ref{fig:mape-k}.
 
 The cloud application deployment is monitored and the configuration is adjusted
 based on metrics reported by monitoring agents (pieces of software) attached to
@@ -863,7 +863,12 @@ monitor the internal workings of the JVM). Aspect oriented programming can be
 used to instrument at the application level to monitor metrics unique to the
 application or its business logic.
 
-\missingfigure{MAPE-K diagram!}
+\begin{figure}[h!]
+	\includegraphics[width=\textwidth]{images/mape-k}
+	\caption{The elasticity controller's functionality is modeled after the \mbox{
+	MAPE-K} control loop.}
+	\label{fig:mape-k}
+\end{figure}
 
 Monitoring data is analysed by the controller in the corresponding phase of the
 MAPE-K loop. The raw sensor data is turned into knowledge in this phase. The
@@ -880,10 +885,10 @@ tolerance zone. This plan can be based on a set of rules that govern the
 operation of the controller component or again a more elaborate model driven
 approach which approximates the behavior of the actual system.
 
-The execution phase is where the controller interfaces with the application and
-its environment to carry out the actions decided in the planning phase. This
-phase relies on automation APIs available for the environment and the runtime
-configurability of the application.
+The execution phase is where the controller or its delegate effector components
+interface with the application and the cloud environment to carry out the actions
+decided in the planning phase. This phase relies on automation APIs available
+for the environment and the runtime configurability of the application.
 
 The executed actions will cause changes in the behavior of the system which are
 then reported back to the controller in subsequent control loops.
@@ -910,10 +915,10 @@ of the application's domain model (database). This kind of monitoring takes more
 effort compared to non-intrusive technical metrics since the monitoring has to
 be customized for the application. The choice of customization or relying on
 lower level metrics is a tradeoff one has to make when designing an elastic
-system. A mapping from business requirements to technical
-requirements~\cite{Chen2008}\cite{Wu2011}\cite{Suleiman2011} may be necessary to
-facilitate communication of the requirements from their source down to the
-implementation of the controller.
+system. A mapping from business requirements to technical requirements~
+\cite{Chen2008}\cite{Emeakaroha2010}\cite{Wu2011}\cite{Suleiman2011} may be
+necessary to facilitate communication of the requirements from their source down
+to the implementation of the controller.
 
 \subsection{Multi-criteria decision analysis} Often the requirements given for
 the performance of a system conflict each other. If, for example, a system is
@@ -960,8 +965,6 @@ required level for maximum utility. The aggregate measure of utility over time
 shows how well the system responds to changes, i.e. how well the system scales
 out and in as a response to changes in its environment.
 
-\missingfigure{Graph of utility function and the area above the x-axis labeled QoE}.
-
 The \emph{quality of elasticity} (QoE) for a system over time can be quantified
 as the integral of the utility function from some moment of time $a$ to time
 $b$ divided by the duration of the measurement $b - a$:
@@ -970,12 +973,20 @@ $b$ divided by the duration of the measurement $b - a$:
 QoE = \frac{\int\limits_a^b U(X)~dx}{b-a} \label{eq:qoefunction}
 \end{equation}
 
-The range for $QoE$ is the same as that of the utility function, i.e. $QoE \in [0, 1]$ in the domain of real numbers.
+The range for $QoE$ is the same as that of the utility function, i.e. $QoE \in [0, 1]$ in the domain of real numbers. Figure~\ref{fig:utility-qoe} illustrates the QoE concept as the area on a graph between the values of $U(X)$ and the x-axis over time.
+
+\begin{figure}[h!]
+	\includegraphics[width=\textwidth]{images/utility-qoe}
+	\caption{Quality of elasticity is the integral of $U(X)$ between two points in 
+	time.}
+	\label{fig:utility-qoe}
+\end{figure}
+
 
 For real systems the utility function is represented by monitored metric values
 gathered over time rather than a mathematical function. In this case the
 integral can be approximated by means of numerical analysis. The trapezoid
-method \todo{stewart2010calculus} is used for this as the step from each data
+method \cite{stewart2010calculus} is used for this as the step from each data
 point to the next is linear and the method gives exact results in such a case.
 
 The numerical trapezoid method version of the $QoE$ formula is
@@ -1062,8 +1073,8 @@ the controller. Scaling decisions can be made reactively when metrics pass their
 thresholds or predictively based on predictive algorithms. In simple cases the
 predictive algorithm could be as simple as specifying time ranges throughout the
 day and scaling out or in according to typical usage. Advanced algorithms do
-exist for more complicated usage patterns~\cite{Iqbal2011}\cite{Tan2012}\cite{Ro
-y2011}\cite{Chen2011}\cite{Wilkes2010}\cite{Cunha2011}.
+exist for more complicated usage patterns~\cite{Iqbal2011}\cite{Tan2012}
+\cite{Roy2011}\cite{Chen2011}\cite{Wilkes2010}\cite{Cunha2011}.
 Predictive scaling is possible as long as there is some indicator in the metrics
 that can be used to decide that higher load is about to come. For web sites,
 sudden spikes of activity like click throughs from a social media discussion
@@ -1120,10 +1131,9 @@ Time spent in the starting and termination phases is up to the cloud provider as
 it is the provider's responsibility to reserve and release physical resources
 for the virtual machine. These phases are pure waiting time in terms of the
 elasticity controller and the application. Billing typically starts at the start
-of this phase, so cost of inefficiency is born by the cloud user \todo{cite
-billing start at instance start command receipt, not completion}. Similarly,
-billing stops at the completion of the VM stop or termination process, so again
-the user can only hope for fast completion.
+of this phase, so cost of inefficiency is born by the cloud user~\cite{ec2faq}.
+Similarly, billing stops at the completion of the VM stop or termination
+process, so again the user can only hope for fast completion.
 
 Finally the ultimate bounds for QoE are set by \textit{utility preferences}. The
 preferences are modeled above as functions of metric data at a point in time.
@@ -1212,8 +1222,8 @@ aspect. Cloud providers offer monitoring services that focus on the
 infrastructure performance, but application specific monitoring has to be set up
 in order to be able to handle failures from a business requirement and service
 level agreement perspective as well as technically. An additional benefit of not
-relying on the cloud provider's monitoring is avoiding cloud vendor lock-
-in~\cite{Petcu2012}. With external services like the open source Ganglia
+relying on the cloud provider's monitoring is avoiding cloud vendor 
+lock-in~\cite{Petcu2012}. With external services like the open source Ganglia
 monitoring system~\cite{gangliapaper} or commercial alternatives like New Relic
 or AppDynamics, it remains possible to add redundancy to the architecture also
 at the cloud provider level by deploying on more than one cloud.
@@ -1466,14 +1476,14 @@ elastic scaling, namely
 \end{itemize}
 
 These questions map to the MAPE-K phases of analysis, planning and execution.
-Here the deployment is described in terms of the MAPE-K (see
+Here the deployment is described in terms of the MAPE-K control loop (see
 chapter~\ref{sec:elasticity_as_a_controlled_process}).
 
 \textit{Monitoring} is implemented using the Ganglia monitoring
 system~\cite{gangliapaper}. The application servers and the load balancer run the
-Ganglia monitoring daemon (\textit{gmond}), which sends metric data to a
+Ganglia monitoring daemon (\texttt{gmond}), which sends metric data to a
 separate monitoring server. The Ganglia monitoring server runs both the
-\textit{gmond} and \textit{gmetad} daemons together aggregate and store metric
+\texttt{gmond} and \texttt{gmetad} daemons together aggregate and store metric
 data from all monitored servers. 
 
 The \textit{analysis} and \textit{planning} phases are the responsibility of an
@@ -1542,7 +1552,7 @@ Similarly the response time function has one special case when it is set to mini
 
 The controller application delegates \textit{execution} of the plan to an
 infrastructure automation tool called Chef. Chef is a cloud age tool which
-enables an \textit{infrastructure as code} approach to IT operations. All
+enables an infrastructure as code approach to IT operations. All
 installation and configuration is done with scripts written in Ruby. In Chef
 terminology, these are referred to as recipes within cookbooks. Chef manages the
 state of the deployment on a separate server which is a part of the
@@ -1554,7 +1564,7 @@ The MAPE-K \textit{knowledge} is a shared concept between the controller
 application, Ganglia and the Chef server. The controller keeps track of trend
 averages of metrics it fetches from Ganglia and system contextualization is done
 based on system state information managed by Chef. The load balancer server runs
-\textit{chef-client} every 30 seconds. This is how knowledge of application
+\texttt{chef-client} every 30 seconds. This is how knowledge of application
 servers is updated at the load balancer. Similarly the address of the monitoring
 server is read from Chef every time a new node is configured (and periodically
 during the node's lifetime). Any change in system configuration due to scaling
@@ -1922,8 +1932,7 @@ provider SLAs. The cloud provider business model and offering is fundamentally
 different from the traditional IT operations without virtualization. Designing
 applications so that they can handle infrastructure failures is key to success.
 
-A prototype elasticity controller implementation along with its requisite
-monitoring infrastructure is presented in
+A prototype elasticity controller implementation  is presented in
 chapter~\ref{sec:elasticScalingPrototype}. The prototype is then put to test in
 chapter~\ref{sec:results}. The results confirm the applicability of the
 controller to its purpose and indicate areas in need of further study that have
