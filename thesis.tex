@@ -1132,22 +1132,24 @@ provider's responsibility to reserve and release physical resources for the
 virtual machine. These phases are pure waiting time in terms of the elasticity
 controller and the application.
 
-Finally the ultimate bounds for QoE are set by \textit{utility preferences}. The
-preferences are modeled above as functions of metric data at a point in time.
-The definition of these functions determines the system's utility. The
+Finally the ultimate bounds for QoE are set by \textit{utility preferences}.
+The preferences are modeled above as functions of metric data at a point in
+time. The definition of these functions determines the system's utility. The
 definitions of these functions need to be realistic and applicable to the
 deployment environment. If the definitions are unrealistic, the system may not
 exhibit any utility or quality of elasticity as defined here. The preferences
 may need to be defined together with technical and business stakeholders to
-arrive at workable results. Preferences typically consider cost, response time,
-throughput and usage of storage space, memory or other resources but could be
-anything that is measurable and for which measured trends can be mapped to
-elastic scaling operations. An elicitation method like the Architectural
-Tradeoff Analysis Method~\cite{ATAM} can be used to elicit the preferences from
-stakeholders. The ATAM method finds quality attributes that are pivotal to the
-success of a system to its stakeholders, but appears to require a lot of effort
-if applied to its full extent. Research on eliciting scalability preferences in particular also exists~\cite{DubocUtility}.
-\clearpage
+arrive at workable results. Preferences typically consider cost, response
+time, throughput and usage of storage space, memory or other resources but
+could be anything that is measurable and for which measured trends can be
+mapped to elastic scaling operations. An elicitation method like the
+Architectural Tradeoff Analysis Method~\cite{ATAM} can be used to elicit the
+preferences from stakeholders. The ATAM method finds quality attributes that
+are pivotal to the success of a system to its stakeholders, but appears to
+require a lot of effort if applied to its full extent. Research on eliciting
+scalability preferences in particular also exists~\cite{DubocUtility}.
+
+%\clearpage
 	\begin{table}[h]
 \resizebox{\linewidth}{!}{
 	    \begin{tabular}{| m{6cm} || >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} |}
