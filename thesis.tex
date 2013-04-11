@@ -581,7 +581,7 @@ dynamic environment (data divided into parts equal in amount to that of
 computing nodes) scales very well. Recently multicore processors have brought
 more possibilities to architecting scalability~\cite{amhdalmulticore} but the
 basic principles from the 1960s still apply for computations done either with
-processor cores or virtual nodes on a cloud platform. Similar high level
+processor cores or virtual nodes on an elastic cloud platform. Similar high level
 algorithms work for both cases, and the source of computing resources can be
 thought of as an abstract concept.
 
@@ -852,6 +852,8 @@ developed. The overall utility over a range of time is introduced as
 utility within a defined range given a specific usage pattern is defined as the
 \textit{QoE score}.
 
+The fact that utility and QoE are based on business requirements is key here. Cloud adoption in enterprises is increasingly a step towards making the business more agile instead of saving on IT operations costs~\cite{cloudberkeleyviewacm}. The QoE concept facilitates measurement and scoring of system behavior given a set of business requirements. The system's performance can be optimized by varying either the cloud platform, the way the elastic scaling is handled or the parallelizability of the application implementation. The direction and need for optimizations originates from the business requirements and the QoE results are understandable by business stakeholders. This enables a quick feedback loop between business and IT stakeholders.
+
 \subsection{Elasticity as a controlled process}
 \label{sec:elasticity_as_a_controlled_process}
 
@@ -866,7 +868,7 @@ the application itself. The responsibilities of such an \emph{elasticity control
 are to monitor the system, analyze the metrics, plan corrective actions and
 execute them. This is known as a MAPE-K control
 loop~\cite{Huebscher2008}\cite{Mueller2009} named after its phases (Monitoring,
-Analysis, Plannning, Execution, Knowledge). The knowledge in MAPE-K loops is
+Analysis, Planning, Execution, Knowledge). The knowledge in MAPE-K loops is
 shared data between the actual MAPE phases. The loop is illustrated in figure~\ref{fig:mape-k}.
 
 The cloud application deployment is monitored and the configuration is adjusted
@@ -973,7 +975,9 @@ represent the relative importance of each preference function to overall
 utility, with $\sum_{i=1}^k w_{i} = 1$.
 
 
-\subsection{Quality of elasticity} The utility function (\ref{eq:utilityfunction}),
+\subsection{Quality of elasticity} 
+
+The utility function (\ref{eq:utilityfunction}),
 given business-related preferences, measures the business utility of a system
 with regard to its performance metrics. Plotting the utility over time as the
 usage pattern changes shows how the system responds to these changes. A perfectly
@@ -994,8 +998,8 @@ The range for $QoE$ is the same as that of the utility function, i.e. $QoE \in [
 
 \begin{figure}[h!]
 	\includegraphics[width=\textwidth]{images/utility-qoe}
-	\caption{Quality of elasticity is the integral of $U(X)$ between two points in 
-	time.}
+	\caption{Quality of elasticity is the integral of the utility function $U(X)$ 
+	between two points in time.}
 	\label{fig:utility-qoe}
 \end{figure}
 
@@ -1043,34 +1047,14 @@ system's elasticity:
 	\label{eq:qoeScore}
 \end{equation}
 
-Table
-\ref{table:QoEFactors} lists notable factors of QoE and attributes them to system
-components based on the components' infuence on the factor. The factors are both
-technical and business related in nature and are discussed in the remainder of
-this chapter.
 
-	\begin{table}[h]
-\resizebox{\linewidth}{!}{
-	    \begin{tabular}{| m{6cm} || >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} |}
-	    \hline
-	    \multirow{2}{*}{\textbf{QoE Factor}} & \multicolumn{4}{c |}{\textbf{System Component}} \\
-	    & Elasticity Controller & Cloud Provider & Application & Business modeling \\ \hline
+\subsection{Factors of quality of elasticity}
 
-		Price - performance ratio & X & X & X & \\ \hline
-		Infrastructure pricing & & X & & \\ \hline	    
-		Billing granularity & & X & & \\ \hline
-	    VM provisioning speed & X & X & X & \\ \hline
-	    Metric data quality & X & X & & \\ \hline
-	    Decision making speed & X & & & \\ \hline
-	    Correctness of scaling decisions & X & & & \\ \hline
-		Level of parallelization & & & X & \\ \hline
-		Utility preferences & & & & X \\ \hline
-	    \end{tabular}
-}
-	    \caption{QoE factors and the system components which can affect them.}
-	    \label{table:QoEFactors}
-
-	\end{table}
+Quality of elasticity depends on multiple factors which are are both technical
+and business related in nature. These factors are discussed in the remainder
+of this chapter. Table \ref{table:QoEFactors} on page
+\pageref{table:QoEFactors} collects the factors and attributes them to system
+components based on the components' infuence on the factor.
 
 For good elasticity, the elasticity controller has to be fed with timely and
 correct information on the status of the system. The controller's monitoring
@@ -1163,7 +1147,29 @@ Tradeoff Analysis Method~\cite{ATAM} can be used to elicit the preferences from
 stakeholders. The ATAM method finds quality attributes that are pivotal to the
 success of a system to its stakeholders, but appears to require a lot of effort
 if applied to its full extent. Research on eliciting scalability preferences in particular also exists~\cite{DubocUtility}.
+\clearpage
+	\begin{table}[h]
+\resizebox{\linewidth}{!}{
+	    \begin{tabular}{| m{6cm} || >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} | >{\centering\arraybackslash}p{2cm} |}
+	    \hline
+	    \multirow{2}{*}{\textbf{QoE Factor}} & \multicolumn{4}{c |}{\textbf{System Component}} \\
+	    & Elasticity Controller & Cloud Provider & Application & Business modeling \\ \hline
 
+		Price - performance ratio & X & X & X & \\ \hline
+		Infrastructure pricing & & X & & \\ \hline	    
+		Billing granularity & & X & & \\ \hline
+	    VM provisioning speed & X & X & X & \\ \hline
+	    Metric data quality & X & X & & \\ \hline
+	    Decision making speed & X & & & \\ \hline
+	    Correctness of scaling decisions & X & & & \\ \hline
+		Level of parallelization & & & X & \\ \hline
+		Utility preferences & & & & X \\ \hline
+	    \end{tabular}
+}
+	    \caption{QoE factors and the system components which can affect them.}
+	    \label{table:QoEFactors}
+
+	\end{table}
 % \subsection{Elasticity controller architecture}
 
 % Technology independent explanation of elasticity controller architecture goes here.\todo{Is tech independent controller architecture really still todo or can it be skipped?}
@@ -1391,9 +1397,13 @@ in further chapters.
 	\label{fig:deploymentDiagram}
 \end{figure}
 
-The elasticity requirements for this application are related to response time
-and cost. These requirements conflict as reducing response time by adding more
-server instances will increase the cost.
+
+The QoE concept needs business requirements to determine the quality of
+elasticity. Any requirement can be used as long as it is quantifiable and
+measurable in the runtime environment. The requirements for the prototype
+application are related to response time and cost. These requirements conflict
+as reducing response time by adding more server instances will increase the
+cost.
 
 The response time requirement states that the application must respond to
 requests within $r_{min} = 0.8$ to $r_{max} = 1.5$
@@ -1481,8 +1491,9 @@ elastic scaling, namely
 \end{itemize}
 
 These questions map to the MAPE-K phases of analysis, planning and execution.
-Here the deployment is described in terms of the MAPE-K control loop (see
-chapter~\ref{sec:elasticity_as_a_controlled_process}).
+Here the deployment and execution sequence of the elasticity controller is
+described in terms of the MAPE-K control loop (see
+figure~\ref{fig:mape-k} on page \pageref{fig:mape-k}).
 
 \textit{Monitoring} is implemented using the Ganglia monitoring
 system~\cite{gangliapaper}. The application servers and the load balancer run the
@@ -1576,18 +1587,22 @@ during the node's lifetime). Any change in system configuration due to scaling
 operations gets updated to live nodes in this way.
 
 Although the monitoring system reports new values every 15 seconds, the moving
-average values for metrics take time to reflect a change in system performance.
-Response time, for example, is measured as a biased histogram of 1028 data
-points. The histogram sample uses a forward-decaying algorithm which favors data
-from the past 5 minutes~\cite{forwardDecayHistogram}\cite{codahaleHistogram}.
-This metric type is good at evening out jitter in the values but takes time to
-react to significant changes as well. To allow time for the metrics to stabilize
-after a provisioning operation, the system has a 3-minute quiet period after
-each provisioning completes. No new provisioning operations are started during
-this time. This gives time for the metrics to stabilize for a new amount of
-virtual machines and e.g. data to start actually arriving from newly provisioned
-VMs, but also means the system is not responsive to utility changes during this
-time. Responsiveness is further hindered by the time it takes to provision instances, as the total quiet period consists of first waiting for new instances and then waiting for metrics to stabilize.
+average values for metrics take time to reflect a change in system
+performance. Response time, for example, is measured as a biased histogram of
+1028 data points. The histogram sample uses a forward-decaying algorithm which
+favors data from the past 5
+minutes~\cite{forwardDecayHistogram}\cite{codahaleHistogram}. Averaged metrics
+are used to even out jitter (oscillation) in the measured values that could
+trigger unnecessary provisioning operations. The downside is that the metrics
+take time to react to significant changes as well. To allow time for the
+metrics to react and stabilize after a provisioning operation, the system has
+a 3-minute quiet period after each provisioning completes. No new provisioning
+operations are started during this time. This gives time for the metrics to
+stabilize for a new amount of virtual machines and e.g. data to start actually
+arrive from newly provisioned VMs, but also means the system is not responsive
+to utility changes during this time. Responsiveness is further hindered by the
+time it takes to provision instances, as the total quiet period consists of
+first waiting for new instances and then waiting for metrics to stabilize.
 
 	\begin{table}[h]
 		\resizebox{\textwidth}{!}{
@@ -1946,6 +1961,12 @@ parallelization of the elasticity controller's decision making functionality are
 identified as areas of possible improvement. The quality of the controller's
 decisions could be improved by moving from a reactive analysis model to a
 predictive one.
+
+The QoE results correctly indicate that the elasticity controller handled test
+scenario 1 better than scenario 2 in terms of the business requirements used
+to define QoE for the prototype. The QoE concept should be put to further test
+using varying business requirement definitions to determine its universal
+applicability to measuring cloud elasticity.
 
 \clearpage
 \appendix
