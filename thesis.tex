@@ -1372,7 +1372,28 @@ The application is deployed on the Amazon Elastic Compute Cloud (EC2) IaaS
 platform. All server nodes run the Ubuntu Linux operating system. The minimal
 configuration consists of one application server node (jetty) and a load
 balancer node (nginx). Further details of system components and their versions
-is given in table \ref{table:componentVersions}.
+are given in table \ref{table:componentVersions}.
+
+	\begin{table}[h]
+		\resizebox{\textwidth}{!}{
+	    \begin{tabular}{| l | r | p{6cm} |}
+	    \hline
+	    \multicolumn{3}{| c |}{\textbf{Components in the prototype environment}} \\ \hline
+		\textbf{Component} & \textbf{Version} & \textbf{Purpose} \\ \hline
+		Jetty & 8.1.7.v20120910 & Web server \& Java servlet container \\ \hline
+		Nginx & 1.1.19 & Load balancer \& HTTP server \\ \hline
+	    Chef & 10.18.2 & Infrastructure automation tool \\ \hline
+	    Gatling & 1.4.1 & Load testing tool \\ \hline
+	    Ganglia & 3.4.0 & Monitoring system \\ \hline
+		Ganglia Web & 3.5.2 & Monitoring dashboard user interface \\ \hline
+		Codahale Metrics & 3.0.0-SNAPSHOT & Java library for collecting 
+		metrics from application server and application \\ \hline
+	    Ubuntu Linux & 12.04.1 LTS & Operating System on all nodes. \\ \hline
+	    \end{tabular}
+		}
+	    \caption{Server applications and tools used in the prototype.}
+	    \label{table:componentVersions}
+	\end{table}
 
 Scaling out for this application means  
 
@@ -1386,7 +1407,7 @@ Scaling out for this application means
 
 Figure~\ref{fig:deploymentDiagram} shows the deployment diagram for the
 application along with elasticity controller components which will be discussed
-in further chapters.
+in chapter~\ref{sec:elasticityController}.
 
 \begin{figure}[h]
 	%\centering
@@ -1483,7 +1504,7 @@ typically handle approximately 3 requests per second with a response time less
 than the $r_{min}$ of 0.8 seconds. This makes $c_{min}$
 roughly equal to 0.3 currency units.
 
-\subsection{Elasticity controller}
+\subsection{Elasticity controller}\label{sec:elasticityController}
 
 The prototype elasticity controller and its monitoring and infrastructure automation facilities are distributed between multiple server nodes
 in the environment as illustrated in figure~\ref{fig:deploymentDiagram}. The controller exists to answer three basic questions on
@@ -1505,10 +1526,10 @@ details of the elasticity controller's execution loop.
 \begin{algorithm}[!h]
   \caption{The MAPE-K control loop implementation in the prototype elasticity controller.}\label{alg:scalingDecision}
   \begin{algorithmic}[1]
-    \Repeat{ every 20 seconds}
+    \Repeat{ every $loopInterval$ seconds}
     	\State $monitorData \gets$ \Call{Monitor}{\null} 
     	\State $systemState \gets$ \Call{Analyze}{$monitorData$} 
-    	\If{$systemState.utility < 0.7$}
+    	\If{$systemState.utility < utilityThreshold$}
     		\State $scalingPlan \gets$ \Call{Plan}{$systemState$}
 	    	\State \Call{Execute}{$scalingPlan$}
     	\EndIf
@@ -1549,12 +1570,14 @@ data from all monitored servers.
 The \textit{analysis} and \textit{planning} phases are the responsibility of
 an elasticity controller application written specifically for this prototype.
 The controller queries the Ganglia server for system state metrics every 20
-seconds and calculates the utility based on the preference functions defined
-for the business application. The controller first analyzes the monitoring
-data together with other \textit{knowledge} of the system to determine the
-current system state. If utility (eq. \ref{eq:utilityfunction} on
-page~\pageref{eq:utilityfunction}) is below a threshold of 0.7, the controller
-proceeds to the planning phase.
+seconds (\textit{loopInterval} in Algorithm~\ref{alg:scalingDecision}) and
+calculates the utility based on the preference functions defined for the
+business application. The controller first analyzes the monitoring data
+together with other \textit{knowledge} of the system to determine the current
+system state. If utility (eq. \ref{eq:utilityfunction} on
+page~\pageref{eq:utilityfunction}) is below a threshold of 0.7
+(\textit{utilityThreshold} in Algorithm~\ref{alg:scalingDecision}), the
+controller proceeds to the planning phase.
 
 For the purpose of making a plan to scale the system either out or in, the
 controller application uses a \text{scaling function} $S(X)$ to indicate the
@@ -1609,20 +1632,24 @@ the trend is considered a \textit{spike}, a sudden large increase in activity.
 With this information, the elasticity controller creates a scaling plan with
 the algorithm given in Algorithm~\ref{alg:scalingDecisionPlan} on
 page~\pageref{alg:scalingDecisionPlan}. Scaling is done in the direction
-indicated by the scaling function $S(X)$ and the amount of server instances to
-add or remove depends on the system state. With gradual growth, the amount of
-application server nodes is increased by half. If the response time slope
-indicates a spike is underway, the amount of server instances to add is the
-current amount multiplied by three. For scaling in, the amount is decided with
-the use of the cost preference function. The cost preference is calculated
-with decreasing instance count until it reaches the maximum preference value.
-Any instances above the count which yields maximum cost preference are
-terminated.
+indicated by the value of the scaling function $S(X)$ with regard to the
+threshold parameters \textit{outThold} and \textit{inThold}. The amount of
+server instances to add or remove depends on the system state. With gradual
+growth, the amount of application server nodes is increased by half
+(\textit{nonSpikeMultiplier}). If the response time slope indicates a spike is
+underway, the amount of server instances to add is the current amount
+multiplied by three (\textit{spikeMultiplier}). For scaling in, the amount is
+decided with the use of the cost preference function $P_{c}$
+(eq.~\ref{eq:costPreference} on page~\pageref{eq:costPreference}). The cost
+preference is calculated with decreasing instance count until it reaches the
+maximum preference value. Any instances above the count which yields maximum
+cost preference are terminated.
 
 Further thresholds apply to the planning phase. In order to scale out, the
-request rate needs to be larger than 2 requests/s. To avoid repeatedly adjusting
-the size of the deployment, scaling in requires the scaling utility function
-value to be $S(X) < -0.5$.
+request rate needs to be larger than 2 requests/s (\textit{rrThold} in
+Algorithm~\ref{alg:scalingDecisionPlan}). To avoid repeatedly adjusting the
+size of the deployment, scaling in requires the scaling utility function value
+to be $S(X) < -0.5$, i.e. \textit{inThold} is set to $0.5$.
 
 \begin{algorithm}[!h]
   \caption{The Planning phase of the MAPE-K loop in detail.}\label{alg:scalingDecisionPlan}
@@ -1631,14 +1658,14 @@ value to be $S(X) < -0.5$.
     	\State $scalingUtility\gets$ \Call{S}{$systemState$} 
     	\Comment{See eq.~\ref{eq:scalingfunction} on 
     	page~\pageref{eq:scalingfunction}}
-    	\If{$scalingUtility$ > 0~AND~$requestRate$ > 2} 
+    	\If{$scalingUtility > outThold$~AND~$requestRate$ > $rrThold$} 
     		\State $scaleOut \gets true$
     		\If{$spike$}
-    			\State $addVMs \gets$ \Call{Ceil}{$currentVMs * 3$}
+    			\State $addVMs \gets$ \Call{Ceil}{$currentVMs * spikeMultiplier$}
     		\Else
-    			\State $addVMs \gets$ \Call{Ceil}{$currentVMs * 0.5$}
+    			\State $addVMs \gets$ \Call{Ceil}{$currentVMs * nonSpikeMultiplier$}
     		\EndIf
-    	\ElsIf{$scalingUtility < -0.5$}
+    	\ElsIf{$scalingUtility < inThold$}
     		\State $scaleIn \gets true$
     		\State $removeVMs \gets currentVMs$
     		\While{\Call{$P_{c}$}{$removeVMs$} < 1} \Comment{See eq.~\ref{eq:costPreference} on page~\pageref{eq:costPreference}}
@@ -1671,6 +1698,62 @@ server is read from Chef every time a new node is configured (and periodically
 during the node's lifetime). Any change in system configuration due to scaling
 operations gets updated to live nodes in this way.
 
+The elasticity controller's decision making is influenced by a number of
+parameters used in algorithms~\ref{alg:scalingDecision}
+and~\ref{alg:scalingDecisionPlan}. The tests described in
+chapter~\ref{sec:results} were carried out with values chosen based on
+empirical tuning over 30 preliminary test runs for the application under test.
+Table~\ref{table:knobsToTurn} lists the parameters, the values used in the
+reported tests and a summary of each parameter's effect on the elasticity
+controller's behavior.
+
+	\begin{table}[h]
+		\resizebox{\textwidth}{!}{
+	    \begin{tabular}{| m{3cm} | r | m{7cm} |}
+	    \hline
+	    \multicolumn{3}{| c |}{\textbf{Scaling decision parameters}} \\ \hline
+		\textbf{Parameter} & \textbf{Value used} & \textbf{Purpose} \\ \hline
+		\textit{loopInterval} & 20 s & The frequency at which the decision loop is 
+		executed. 
+		This needs to be larger than the monitoring system's update frequency.\\
+		 \hline
+		\textit{utilityThreshold} & 0.7 & The value of $U(X)$ below which planning 
+		of a 
+		scaling operation is started. \\ \hline
+	    \textit{outThold} & 0.0 & Scaling out is planned if $S(X)$ is greater than 
+	    this value.
+	     \\ \hline
+	    \textit{inThold} & -0.5 & Scaling in is planned if $S(X)$ is less than this 
+	    value. \\ 
+	    \hline
+	    \textit{rrThold} & 2.0 & Scaling out is planned if $requestRate$ is greater 
+	    than this 
+	    value. \\ \hline
+	    \textit{spike} & $200 \frac{ms}{min}$ & The controller considers the system 
+	    to be 
+	    under a spike load situation if the request rate slope $k_{r}$ is greater than this 
+	    value. \\ \hline 
+	    \textit{spikeMultiplier} & 3.0 & The spike multiplier determines how many 
+	    new virtual 
+	    machines are added when scaling out in a spike situation \\ \hline
+	  	\textit{nonSpikeMultiplier} & 0.5 & The non spike multiplier determines how 
+	  	many new virtual machines are added when scaling out under normal load. \\ 
+	  	\hline
+	    $P_{r}(X)$ & See eq.~\ref{eq:responseTimePreference} & The response time 
+	    preference function determines the business stakeholder preference value for 
+	    a given response time. \\ \hline
+	    $P_{c}(X)$ & See eq.~\ref{eq:costPreference} & The cost preference function 
+	    determines the business stakeholder preference value for a given cost per 
+	    request value. \\ \hline
+	    Other preference functions & none & Further preference functions can be 
+	    included in the calculation of utility $U(X)$ and scaling utility $S(X)$ to refine the controller's behavior under varying business requirements. \\ 
+	    \hline
+	    \end{tabular}
+		}
+	    \caption{Parameters which influence the elasticity controller's scaling decisions.}
+	    \label{table:knobsToTurn}
+	\end{table}
+
 Although the monitoring system reports new values every 15 seconds, the moving
 average values for metrics take time to reflect a change in system
 performance. Response time, for example, is measured as a biased histogram of
@@ -1688,27 +1771,6 @@ arrive from newly provisioned VMs, but also means the system is not responsive
 to utility changes during this time. Responsiveness is further hindered by the
 time it takes to provision instances, as the total quiet period consists of
 first waiting for new instances and then waiting for metrics to stabilize.
-
-	\begin{table}[h]
-		\resizebox{\textwidth}{!}{
-	    \begin{tabular}{| l | r | p{6cm} |}
-	    \hline
-	    \multicolumn{3}{| c |}{\textbf{Components in the prototype environment}} \\ \hline
-		\textbf{Component} & \textbf{Version} & \textbf{Purpose} \\ \hline
-		Jetty & 8.1.7.v20120910 & Web server \& Java servlet container \\ \hline
-		Nginx & 1.1.19 & Load balancer \& HTTP server \\ \hline
-	    Chef & 10.18.2 & Infrastructure automation tool \\ \hline
-	    Gatling & 1.4.1 & Load testing tool \\ \hline
-	    Ganglia & 3.4.0 & Monitoring system \\ \hline
-		Ganglia Web & 3.5.2 & Monitoring dashboard user interface \\ \hline
-		Codahale Metrics & 3.0.0-SNAPSHOT & Java library for collecting 
-		metrics from application server and application \\ \hline
-	    Ubuntu Linux & 12.04.1 LTS & Operating System on all nodes. \\ \hline
-	    \end{tabular}
-		}
-	    \caption{Server applications and tools used in the prototype.}
-	    \label{table:componentVersions}
-	\end{table}
 
 \section{Test results}
 \label{sec:results}
