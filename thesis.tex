@@ -38,7 +38,9 @@
 \usepackage{array}
 \usepackage{setspace}
 \usepackage{morefloats}
-
+\usepackage{algorithm}% http://ctan.org/pkg/algorithm
+\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+\newcommand{\var}[1]{{\ttfamily#1}}% variable
 
 % Automatically set the PDF metadata fields
 \makeatletter
@@ -98,7 +100,7 @@ The concept of an elasticity controller application is presented and a prototype
 implementation described in order to exercise the QoE metric. Two load testing
 scenarios are executed against a simple test application whose deployment is
 managed by the prototype controller. The elastic scaling behavior of the system
-is analysed in terms of the QoE results to confirm the prototype is functional
+is analyzed in terms of the QoE results to confirm the prototype is functional
 and to find areas of improvement.
 
 }
@@ -1061,7 +1063,7 @@ correct information on the status of the system. The controller's monitoring
 subsystem has to be able to deliver relevant metrics quickly. The data should be
 such that it can be reliably used to make scaling decisions. Data jitter can be
 a problem as well so often aggregate data is preferred so trends can be
-analysed. There is a clear tradeoff between how quickly the metrics show a trend
+analyzed. There is a clear tradeoff between how quickly the metrics show a trend
 change and how reliable that indication is. These issues related to
 \textit{metric data quality} may need to be tuned specifically for each
 application.
@@ -1493,9 +1495,49 @@ elastic scaling, namely
 \end{itemize}
 
 These questions map to the MAPE-K phases of analysis, planning and execution.
-Here the deployment and execution sequence of the elasticity controller is
-described in terms of the MAPE-K control loop (see
-figure~\ref{fig:mape-k} on page \pageref{fig:mape-k}).
+Here the deployment and implementation of the elasticity controller is
+described in terms of the MAPE-K control loop (see figure~\ref{fig:mape-k} on
+page \pageref{fig:mape-k}). An overview of the execution sequence is given in
+Algorithm~\ref{alg:scalingDecision} on page~\pageref{alg:scalingDecision}. The rest of this chapter discusses the
+details of the elasticity controller's execution loop.
+
+
+\begin{algorithm}[!h]
+  \caption{The MAPE-K control loop implementation in the prototype elasticity controller.}\label{alg:scalingDecision}
+  \begin{algorithmic}[1]
+    \Repeat{ every 20 seconds}
+    	\State $monitorData \gets$ \Call{Monitor}{\null} 
+    	\State $systemState \gets$ \Call{Analyze}{$monitorData$} 
+    	\If{$systemState.utility < 0.7$}
+    		\State $scalingPlan \gets$ \Call{Plan}{$systemState$}
+	    	\State \Call{Execute}{$scalingPlan$}
+    	\EndIf
+    \Until{the system stops.}
+    \Statex
+    \Procedure{Monitor}{\null}
+    	\State Acquire and transform $monitorData$ from Ganglia
+    	\State \textbf{return} $monitorData$
+    \EndProcedure
+    \Statex
+    \Procedure{Analyze}{$monitorData$}
+    	\State Update $knowledge$ based on $monitorData$
+    	\State Define current $systemState$ based on $knowledge$
+    	\State \textbf{return} $systemState$
+    \EndProcedure
+    \Statex
+    \Procedure{Plan}{$systemState$}
+    	\State See Algorithm~\ref{alg:scalingDecisionPlan} on page~\pageref{alg:scalingDecisionPlan} for details.
+    \EndProcedure
+    \Statex
+    \Procedure{Execute}{$scalingPlan$}
+    	\If{$scalingPlan.scaleOut$}
+    		\State Use chef to add virtual machines according to the plan.
+    	\ElsIf{$scalingPlan.scaleIn$}
+    		\State Use chef to remove virtual machines according to the plan.
+    	\EndIf
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
 
 \textit{Monitoring} is implemented using the Ganglia monitoring
 system~\cite{gangliapaper}. The application servers and the load balancer run the
@@ -1504,12 +1546,15 @@ separate monitoring server. The Ganglia monitoring server runs both the
 \texttt{gmond} and \texttt{gmetad} daemons which together aggregate and store metric
 data from all monitored servers. 
 
-The \textit{analysis} and \textit{planning} phases are the responsibility of an
-elasticity controller application written specifically for this prototype. The
-controller queries the Ganglia server for system state metrics every 20 seconds
-and calculates the utility based on the preference functions defined for the
-business application. The controller first analyses the system utility. If
-utility is below a threshold of 0.7, the controller proceeds to the planning phase.
+The \textit{analysis} and \textit{planning} phases are the responsibility of
+an elasticity controller application written specifically for this prototype.
+The controller queries the Ganglia server for system state metrics every 20
+seconds and calculates the utility based on the preference functions defined
+for the business application. The controller first analyzes the monitoring
+data together with other \textit{knowledge} of the system to determine the
+current system state. If utility (eq. \ref{eq:utilityfunction} on
+page~\pageref{eq:utilityfunction}) is below a threshold of 0.7, the controller
+proceeds to the planning phase.
 
 For the purpose of making a plan to scale the system either out or in, the
 controller application uses a \text{scaling function} $S(X)$ to indicate the
@@ -1521,62 +1566,100 @@ on requiring either scaling out or scaling in to improve their value.  The
 scaling function then takes the form
 
 \begin{equation}
-S(X) = \sum\limits_{i=1}^j w_{i}^{in}P_{i}^{in}(X) + 
+S(X) = \sum\limits_{i=1}^j w_{i}^{in}(-1+P_{i}^{in}(X)) + 
 		\sum\limits_{i=1}^k w_{i}^{out}P_{i}^{out}(X).
 \label{eq:scalingfunction}
 \end{equation}
 
 where $P_{i}^{in}$ denotes a preference which requires scaling in and
 $P_{i}^{out}$ denotes a preference which requires scaling out to improve. The
-weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two groups so
-that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k w_{i}^{out} =
-1$. In practice the prototype used here has one preference ($P_{r}$) for scaling out and one ($P_{c}$) for scaling in, so both their weights are $1.0$.
+weights $w_{i}^{in}$ and $w_{i}^{out}$ are distributed among these two groups
+so that $\sum\limits_{i=1}^j w_{i}^{in} = 1$ and $\sum\limits_{i=1}^k
+w_{i}^{out} = 1$. In practice the prototype used here has one preference
+($P_{r}$) for scaling out and one ($P_{c}$) for scaling in, so both their
+weights are $1.0$.
 
-In addition to the scaling function, the elasticity controller detects trends in
-response time by keeping track of the request response time in a 5-minute moving
-window. The slope $k_{r}$ of response time is calculated based on the delta of
-the metric value 5 minutes ago and currently. If response time has grown more
-than 200 ms per minute in the last 5 minutes, i.e. $k_{r} > 200 \frac{ms}{min}$,
+With the above definition of the scaling function $S(X)$, it is possible that
+positive scale out preferences and negative scale in preferences cancel each
+other out or interfere with each other at a time when the metrics clearly
+indicate scaling is needed in a specific direction. For this reason, the cost
+preference is considered to be at its maximum in the following situations:
+
+\begin{itemize}
+	\item{If the slope $k_{r}$ is larger than $50 \frac{ms}{min}$. This indicates an 
+	increasing load trend.}
+	\item{If there are requests queued up at the application server(s), i.e. all 
+	available processing threads are processing a request and more requests are 
+	waiting to be processed.}
+	\item{If there is only one application server.}
+\end{itemize}
+
+Similarly the response time preference function has one special case when it
+is set to minimum preference. This is when the response time slope indicates a
+spike. The response time preference function then indicates the need to scale
+out regardless of the current response time value.
+
+In addition to the scaling function, the elasticity controller detects trends
+in request response time by keeping track of it in a 5-minute moving window.
+The slope $k_{r}$ of response time is calculated based on the delta of the
+metric value 5 minutes ago and currently. If response time has grown more than
+200 ms per minute in the last 5 minutes, i.e. $k_{r} > 200 \frac{ms}{min}$,
 the trend is considered a \textit{spike}, a sudden large increase in activity.
 
-With this information, the elasticity controller creates a scaling plan. Scaling
-is done in the direction indicated by the scaling function $S(X)$ and the amount
-of server instances to add or remove depends on the slope. With gradual growth,
-the amount of application server nodes is increased by half. If the response
-time slope indicates a spike is underway, the server instance count is
-multiplied by three. 
+With this information, the elasticity controller creates a scaling plan with
+the algorithm given in Algorithm~\ref{alg:scalingDecisionPlan} on
+page~\pageref{alg:scalingDecisionPlan}. Scaling is done in the direction
+indicated by the scaling function $S(X)$ and the amount of server instances to
+add or remove depends on the system state. With gradual growth, the amount of
+application server nodes is increased by half. If the response time slope
+indicates a spike is underway, the amount of server instances to add is the
+current amount multiplied by three. For scaling in, the amount is decided with
+the use of the cost preference function. The cost preference is calculated
+with decreasing instance count until it reaches the maximum preference value.
+Any instances above the count which yields maximum cost preference are
+terminated.
 
 Further thresholds apply to the planning phase. In order to scale out, the
 request rate needs to be larger than 2 requests/s. To avoid repeatedly adjusting
 the size of the deployment, scaling in requires the scaling utility function
-value to be $S(X) < 0.5$.
+value to be $S(X) < -0.5$.
 
-For scaling in, the amount is decided with the use of the cost preference
-function. The cost preference is calculated with decreasing instance count until
-it reaches the maximum preference value. Any instances above the count which
-yields maximum cost preference are terminated.
-
-With the above definition of the scaling function $S(X)$, it is possible that
-positive scale out preferences and negative scale in preferences cancel each
-other out or interfere with each other at a time when the metrics clearly indicate scaling is needed in a specific direction. For this reason, the cost preference is considered to be at its maximum in the following situations:
-
-\begin{itemize}
-	\item{If the slope is larger than $50 \frac{ms}{min}$. This indicates an increasing load trend.}
-	\item{If there are requests queued up at the application server(s), i.e. all available processing threads are processing a request and more requests are waiting to be processed.}
-	\item{If there is only one application server.}
-\end{itemize}
-
-Similarly the response time function has one special case when it is set to minimum preference. This is when the response time slope indicates a spike. The preference function then indicates the need to scale out regardless of the current response time value.
+\begin{algorithm}[!h]
+  \caption{The Planning phase of the MAPE-K loop in detail.}\label{alg:scalingDecisionPlan}
+  \begin{algorithmic}[1]
+    \Procedure{Plan}{$systemState$}
+    	\State $scalingUtility\gets$ \Call{S}{$systemState$} 
+    	\Comment{See eq.~\ref{eq:scalingfunction} on 
+    	page~\pageref{eq:scalingfunction}}
+    	\If{$scalingUtility$ > 0~AND~$requestRate$ > 2} 
+    		\State $scaleOut \gets true$
+    		\If{$spike$}
+    			\State $addVMs \gets$ \Call{Ceil}{$currentVMs * 3$}
+    		\Else
+    			\State $addVMs \gets$ \Call{Ceil}{$currentVMs * 0.5$}
+    		\EndIf
+    	\ElsIf{$scalingUtility < -0.5$}
+    		\State $scaleIn \gets true$
+    		\State $removeVMs \gets currentVMs$
+    		\While{\Call{$P_{c}$}{$removeVMs$} < 1} \Comment{See eq.~\ref{eq:costPreference} on page~\pageref{eq:costPreference}}
+    			\State Decrement $removeVMs$
+    		\EndWhile
+    		\State $removeVMs \gets currentVMs - removeVMs$
+    	\EndIf
+    	\State \textbf{return} $scalingPlan$
+    \EndProcedure
+    \end{algorithmic}
+\end{algorithm}
 
 The controller application delegates \textit{execution} of the plan to an
-infrastructure automation tool called Chef. Chef is a cloud age tool which
-enables an infrastructure as code approach to IT operations. All installation
-and configuration is done with scripts written in Ruby. In Chef terminology,
-these are referred to as recipes within cookbooks. Chef manages the state of the
-deployment on a separate server which is a part of the infrastructure. Each
-server node managed by Chef runs the \texttt{chef-client} daemon which
-periodically connects to the Chef server and configures the node to match the
-state received from the Chef server.
+infrastructure automation tool called Chef. It enables an infrastructure as
+code approach to IT operations. All installation and configuration is done
+with scripts written in Ruby. In Chef terminology, these are referred to as
+recipes within cookbooks. Chef manages the state of the deployment on a
+separate server which is a part of the infrastructure. Each server node
+managed by Chef runs the \texttt{chef-client} daemon which periodically
+connects to the Chef server and configures the node to match the state
+received from the Chef server.
 
 The MAPE-K \textit{knowledge} is a shared concept between the controller
 application, Ganglia and the Chef server. The controller keeps track of trend
@@ -1904,7 +1987,7 @@ it is inexpensive to overprovision by a certain percentage as an insurance
 against failed VM delivery or performance fluctuations.
 
 The controller logic implemented for the prototype is based on a reactive
-concept. The controller analyses historical data and makes decisions based on
+concept. The controller analyzes historical data and makes decisions based on
 that. Introducing a predictive analysis model could help maximize $QoE$
 ~\cite{cloudberkeleyviewacm} as the controller could know to prepare for future
 load before it arrives by either provisioning new resources or deciding not to
