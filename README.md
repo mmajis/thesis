@@ -1,1 +1,1 @@
-Master's thesis on cloud elasticity. Work in progress.
+Master's thesis on cloud elasticity. See the [finished publication](http://hdl.handle.net/10138/38976) in the University of Helsinki digital archive.
